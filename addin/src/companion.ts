@@ -89,9 +89,9 @@ export async function checkCompanion(): Promise<Hello> {
 
 /**
  * Asks the app for permission to control it. The app shows an "Allow" prompt;
- * resolves true once the teacher clicks Allow, false if they decline.
+ * resolves with the teacher's answer ('approved', 'denied' or 'expired').
  */
-export async function pair(): Promise<boolean> {
+export async function pair(): Promise<PairPoll['state']> {
   const { requestId } = await request<PairStart>('/v1/pair', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -103,11 +103,11 @@ export async function pair(): Promise<boolean> {
     const poll = await request<PairPoll>(`/v1/pair/${encodeURIComponent(requestId)}`);
     if (poll.state === 'approved' && poll.token) {
       saveToken(poll.token);
-      return true;
+      return 'approved';
     }
-    if (poll.state !== 'pending') return false;
+    if (poll.state !== 'pending') return poll.state;
   }
-  return false;
+  return 'expired';
 }
 
 export function getStatus(): Promise<Status> {

@@ -34,10 +34,16 @@ struct TauriUi {
 
 impl Ui for TauriUi {
     fn show_pairing_prompt(&self, request_id: &str) {
-        let url = format!("pair.html?id={request_id}");
+        // If the prompt is already open, hand it the new request instead of
+        // closing and reopening it (closing is asynchronous, so reopening
+        // straight away fails and would leave a stale, expired prompt).
         if let Some(existing) = self.app.get_webview_window("pair") {
-            let _ = existing.close();
+            let _ = existing.emit("pair-request", request_id);
+            let _ = existing.show();
+            let _ = existing.set_focus();
+            return;
         }
+        let url = format!("pair.html?id={request_id}");
         let result = WebviewWindowBuilder::new(&self.app, "pair", WebviewUrl::App(url.into()))
             .title("Connect PowerPoint")
             .inner_size(380.0, 300.0)

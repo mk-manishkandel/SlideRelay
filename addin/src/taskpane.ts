@@ -128,8 +128,9 @@ function wire(): void {
     $('pair-hint').hidden = false;
     showError(null);
     try {
-      const ok = await pair();
-      if (!ok) showError('Connection was not allowed. Click Connect to try again.');
+      const result = await pair();
+      if (result === 'denied') showError('Connection was not allowed. Click Connect to try again.');
+      if (result === 'expired') showError('That took too long. Click Connect to try again.');
     } catch {
       showError('Could not reach the SlideRelay app. Make sure it is open.');
     } finally {

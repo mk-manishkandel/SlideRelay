@@ -84,7 +84,7 @@ impl Hub {
         if old == mode {
             return;
         }
-        if mode == ViewerMode::Ended || mode == ViewerMode::Waiting {
+        if mode == ViewerMode::Ended {
             // A new broadcast must never show a slide from an old one.
             *self.latest.lock().unwrap_or_else(|e| e.into_inner()) = None;
             self.frame_tx.send_replace(None);

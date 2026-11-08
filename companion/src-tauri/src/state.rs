@@ -172,8 +172,10 @@ pub fn viewer_mode(status: &Status) -> ViewerMode {
     match status.state {
         BroadcastState::Idle => ViewerMode::Ended,
         _ if status.blanked => ViewerMode::Blank,
+        // Paused means "freeze on the last slide", even if the teacher then
+        // leaves the slideshow to edit something.
+        _ if status.paused => ViewerMode::Paused,
         BroadcastState::Waiting => ViewerMode::Waiting,
-        BroadcastState::Live if status.paused => ViewerMode::Paused,
         BroadcastState::Live => ViewerMode::Live,
     }
 }
@@ -213,5 +215,19 @@ mod tests {
         s.run(Command::Start).unwrap();
         s.run(Command::Blank).unwrap();
         assert_eq!(s.hub.mode(), ViewerMode::Blank);
+    }
+
+    #[test]
+    fn pause_stays_paused_when_the_slideshow_is_left() {
+        let s = state();
+        s.run(Command::Start).unwrap();
+        s.update(|x| x.set_slideshow_found(true));
+        s.hub.push(vec![7]);
+        s.run(Command::Pause).unwrap();
+        // Teacher leaves the slideshow to use PowerPoint.
+        s.update(|x| x.set_slideshow_found(false));
+        assert_eq!(s.hub.mode(), ViewerMode::Paused);
+        let (frames, _) = s.hub.subscribe();
+        assert_eq!(frames.borrow().as_ref().unwrap().jpeg.as_ref(), &[7]);
     }
 }

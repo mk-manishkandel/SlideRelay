@@ -59,6 +59,11 @@
   box-sizing: border-box;
 }
 
+/* `hidden` must always win, even over components that set display:flex. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: var(--sr-font);

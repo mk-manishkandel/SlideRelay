@@ -411,8 +411,45 @@ fn on_broadcast_state(app: &AppHandle, from: session::BroadcastState, to: sessio
             toolbar::hide_toolbar(app);
             toolbar::hide_qr(app);
             toolbar::unregister_shortcuts(app);
+            quit_after_stop(app);
         }
         _ => toolbar::reposition_toolbar(app),
+    }
+}
+
+/// Quits SlideRelay shortly after a broadcast stops (if the presenter
+/// wants that), once viewers have had time to see "The broadcast has ended"
+/// and the panel has its answer.
+fn quit_after_stop(app: &AppHandle) {
+    let state = app.state::<Arc<AppState>>().inner().clone();
+    if !state.settings().quit_on_stop {
+        return;
+    }
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_millis(2500)).await;
+        // Started again in the meantime? Then stay.
+        if state.status().state == session::BroadcastState::Idle {
+            tracing::info!("broadcast stopped; quitting as set in Settings");
+            app.exit(0);
+        }
+    });
+}
+
+/// Handles sliderelay:// links from the panel: "start" starts a broadcast,
+/// "open" (or anything else) just makes sure the app is running.
+fn handle_links(app: &AppHandle, urls: &[tauri::Url]) {
+    for url in urls {
+        tracing::info!("opened with link {url}");
+        if url.host_str() == Some("start") {
+            let state = app.state::<Arc<AppState>>().inner().clone();
+            if state.status().state == session::BroadcastState::Idle {
+                let _ = state.run(Command::Start);
+            }
+        }
+    }
+    if needs_attention(app) {
+        show_main_window(app);
     }
 }
 
@@ -437,10 +474,13 @@ fn needs_attention(app: &AppHandle) -> bool {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app = tauri::Builder::default()
-        // Must be first: a second launch (or a sliderelay:// link) just
-        // brings the running app to the front.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            show_main_window(app);
+        // Must be first: a second launch goes to the running app instead.
+        // sliderelay:// links arrive through the deep-link plugin below.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            let has_link = args.iter().any(|a| a.starts_with("sliderelay:"));
+            if !has_link && needs_attention(app) {
+                show_main_window(app);
+            }
         }))
         .plugin(tauri_plugin_deep_link::init())
         .plugin(
@@ -544,6 +584,18 @@ pub fn run() {
             start_viewer_server(state.clone());
 
             build_tray(&handle)?;
+
+            // sliderelay://start and sliderelay://open, at launch and later.
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                let link_handle = handle.clone();
+                app.deep_link().on_open_url(move |event| {
+                    handle_links(&link_handle, &event.urls());
+                });
+                if let Ok(Some(urls)) = app.deep_link().get_current() {
+                    handle_links(&handle, &urls);
+                }
+            }
 
             // SlideRelay lives in the menu bar / system tray. Only open its
             // window when the presenter has something to do there (a one-time

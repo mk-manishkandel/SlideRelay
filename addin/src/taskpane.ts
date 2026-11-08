@@ -34,7 +34,10 @@ import { isViewerLink, qrSvg, shortLink } from './qr';
 
 declare const __BUILD_ID__: string;
 
-type View = 'checking' | ConnectionProblem | 'idle' | 'broadcasting' | 'settings';
+type View = 'checking' | ConnectionProblem | 'idle' | 'broadcasting' | 'settings' | 'ended';
+
+/** Set when the presenter clicks Stop: if the app then quits, say so kindly. */
+let justStopped = false;
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -211,6 +214,7 @@ function fillSettings(view: SettingsView): void {
 
   $<HTMLSelectElement>('set-toolbar').value = s.toolbarPosition;
   $<HTMLInputElement>('set-login').checked = s.launchAtLogin;
+  $<HTMLInputElement>('set-quit').checked = s.quitOnStop;
 }
 
 /** Reads the form; returns a plain-words problem instead if something's off. */
@@ -232,6 +236,7 @@ function readSettings(base: PresenterSettings): PresenterSettings | string {
     port,
     toolbarPosition: $<HTMLSelectElement>('set-toolbar').value as ToolbarPosition,
     launchAtLogin: $<HTMLInputElement>('set-login').checked,
+    quitOnStop: $<HTMLInputElement>('set-quit').checked,
   };
 }
 
@@ -294,7 +299,10 @@ async function connect(): Promise<void> {
   clearTimeout(retryTimer);
   try {
     await checkCompanion();
-    render(await getStatus());
+    const status = await getStatus();
+    // Back after a restart: from now on, a missing app is just "not running".
+    if (status.state !== 'idle') justStopped = false;
+    render(status);
     unsubscribe?.();
     unsubscribe = subscribe(render, () => {
       // The app quit or crashed: go back to checking.
@@ -305,7 +313,9 @@ async function connect(): Promise<void> {
     if (err instanceof CompanionError) {
       $('live-pill').hidden = true;
       renderShare(null);
-      showView(err.problem);
+      // SlideRelay quits after Stop (if set): show "Broadcast ended" instead
+      // of "not running".
+      showView(err.problem === 'not-running' && justStopped ? 'ended' : err.problem);
       // Keep retrying quietly, except while waiting for the presenter to pair.
       if (err.problem !== 'not-paired') scheduleRetry();
     } else {
@@ -416,8 +426,12 @@ function wire(): void {
   });
   $('stop-yes').addEventListener('click', () => {
     showStopConfirm(false);
+    justStopped = true;
     run('stop');
   });
+  // Same as "Open SlideRelay": Office hands the sliderelay:// link to the
+  // system, which launches the app; it then starts broadcasting by itself.
+  $('restart-btn').addEventListener('click', () => scheduleRetry());
 }
 
 // Office.onReady also fires when the page is opened in a normal browser

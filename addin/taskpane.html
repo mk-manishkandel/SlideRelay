@@ -58,6 +58,19 @@
         </p>
       </section>
 
+      <section data-view="ended" hidden>
+        <h1>Broadcast ended</h1>
+        <p class="sr-muted">SlideRelay has closed. Viewers see that the broadcast has ended.</p>
+        <a
+          id="restart-btn"
+          class="sr-btn sr-btn--primary sr-btn--big"
+          href="sliderelay://start"
+          target="_blank"
+          >Start a new broadcast</a
+        >
+        <p class="small sr-muted">This opens SlideRelay and starts broadcasting.</p>
+      </section>
+
       <section data-view="companion-outdated" hidden>
         <h1>Please update the SlideRelay app</h1>
         <p class="sr-muted">
@@ -192,6 +205,11 @@
           <label class="check">
             <input id="set-login" type="checkbox" />
             <span>Start SlideRelay when I log in</span>
+          </label>
+
+          <label class="check">
+            <input id="set-quit" type="checkbox" />
+            <span>Quit SlideRelay when I stop broadcasting</span>
           </label>
 
           <p id="settings-error" class="error" role="alert" hidden></p>

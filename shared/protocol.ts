@@ -86,6 +86,8 @@ export interface PresenterSettings {
   pin: string | null;
   toolbarPosition: ToolbarPosition;
   launchAtLogin: boolean;
+  /** Quit the app a moment after the broadcast stops. */
+  quitOnStop: boolean;
   /** Read-only here: set by the app's setup wizard. */
   setupDone: boolean;
 }

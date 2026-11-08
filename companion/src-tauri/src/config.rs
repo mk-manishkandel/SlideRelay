@@ -39,6 +39,8 @@ pub struct Settings {
     pub pin: Option<String>,
     pub toolbar_position: ToolbarPosition,
     pub launch_at_login: bool,
+    /// Quit SlideRelay a moment after the broadcast stops.
+    pub quit_on_stop: bool,
     /// Set once the setup wizard has been completed.
     pub setup_done: bool,
 }
@@ -53,6 +55,7 @@ impl Default for Settings {
             pin: None,
             toolbar_position: ToolbarPosition::TopCenter,
             launch_at_login: false,
+            quit_on_stop: true,
             setup_done: false,
         }
     }

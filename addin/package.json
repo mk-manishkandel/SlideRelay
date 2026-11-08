@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@types/office-js": "^1.0.616",
-    "office-addin-dev-certs": "^2.0.0",
+    "office-addin-dev-certs": "^3.0.1",
     "office-addin-manifest": "^3.0.0"
   }
 }

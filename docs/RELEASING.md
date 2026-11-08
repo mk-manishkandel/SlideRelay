@@ -33,15 +33,17 @@ Commit that change.
 
 1. **Pick the version** ([semver](https://semver.org)): bug fixes → patch (1.0.1), new features
    → minor (1.1.0), breaking changes → major.
-2. **Set it everywhere:**
+2. **Refresh dependencies (optional):** `cd companion/src-tauri && cargo update`, then run the
+   checks from [CONTRIBUTING.md](../CONTRIBUTING.md). Dependabot only sends Rust patch updates.
+3. **Set it everywhere:**
 
    ```sh
    npm run set-version -- 1.1.0
    ```
 
-3. **Update [CHANGELOG.md](../CHANGELOG.md):** rename `[Unreleased]` to `[1.1.0] - YYYY-MM-DD`
+4. **Update [CHANGELOG.md](../CHANGELOG.md):** rename `[Unreleased]` to `[1.1.0] - YYYY-MM-DD`
    and start a new empty `[Unreleased]`. Write for presenters, in plain words.
-4. **Commit, tag and push:**
+5. **Commit, tag and push:**
 
    ```sh
    git commit -am "Release 1.1.0"
@@ -49,13 +51,13 @@ Commit that change.
    git push && git push --tags
    ```
 
-5. **Wait for [Release](../.github/workflows/release.yml)** (about 20 minutes). It builds:
+6. **Wait for [Release](../.github/workflows/release.yml)** (about 20 minutes). It builds:
    - Windows: `SlideRelay_1.1.0_x64-setup.exe` (NSIS) and `SlideRelay_1.1.0_x64_en-US.msi`
    - Mac: `SlideRelay_1.1.0_universal.dmg`
    - Updater files (`*.sig`, `*.tar.gz`, `latest.json`) and `SHA256SUMS.txt`
-6. **Check the draft** in [Releases](https://github.com/mk-manishkandel/SlideRelay/releases):
+7. **Check the draft** in [Releases](https://github.com/mk-manishkandel/SlideRelay/releases):
    install it on a Windows PC and a Mac, and run the [room test checklist](TEST-CHECKLIST.md).
-7. Click **Edit → Publish release**. Installed copies pick up the update within a day.
+8. Click **Edit → Publish release**. Installed copies pick up the update within a day.
 
 If the tag doesn't match `package.json`, the workflow stops with a clear error. Fix it, delete
 the tag (`git tag -d v1.1.0 && git push --delete origin v1.1.0`) and tag again.

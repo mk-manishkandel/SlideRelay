@@ -1,4 +1,12 @@
-# Weekly, grouped dependency updates (security fixes come as soon as known).
+# Dependency updates.
+#
+# - Minor and patch updates (including security fixes) arrive grouped: one
+#   pull request per ecosystem per week. Merge them when CI is green.
+# - Major versions (breaking changes) are ignored here and upgraded by hand,
+#   with code changes and testing (e.g. TypeScript 7, rand 0.10).
+# - GitHub Actions: one grouped pull request a month. Actions used only by
+#   release.yml (tauri-action) aren't tested by CI: try a dry-run release
+#   (Actions → Release → Run workflow) before merging those.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -7,15 +15,29 @@ updates:
       interval: weekly
     groups:
       npm:
-        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
+
   - package-ecosystem: cargo
     directory: /companion/src-tauri
     schedule:
       interval: weekly
     groups:
       cargo:
-        patterns: ['*']
+        update-types: [patch]
+    # In Rust, 0.9 → 0.10 is a breaking change but Dependabot calls it
+    # "minor", so only patches come automatically. For newer compatible
+    # versions, run `cargo update` before a release.
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major, version-update:semver-minor]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      actions:
+        patterns: ['*']

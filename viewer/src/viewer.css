@@ -84,7 +84,14 @@ body.blank #slide {
   padding: 6px 14px;
   border-radius: 999px;
   background: rgb(0 0 0 / 0.7);
-  font-size: 14px;
+  /* One line on any phone: shrink the text a little on narrow screens
+     instead of wrapping. */
+  white-space: nowrap;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(12px, 3.8vw, 14px);
   font-weight: 600;
 }
 

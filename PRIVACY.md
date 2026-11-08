@@ -32,5 +32,5 @@ store who they are.
 
 ## Questions
 
-Open an [issue](https://github.com/mk-manishkandel/SlideRelay/issues) or see
-[SECURITY.md](SECURITY.md) for private contact.
+Open an [issue](https://github.com/mk-manishkandel/SlideRelay/issues), or email
+**hello@manishkandel.com.np**.

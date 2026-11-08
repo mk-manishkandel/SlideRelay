@@ -9,6 +9,5 @@ accepted, in issues, pull requests or anywhere else in the project.
 ## Reporting
 
 If someone's behaviour worries you, use GitHub's **Report content** option on the comment or
-issue (the **⋯** menu), or contact the maintainer
-[@mk-manishkandel](https://github.com/mk-manishkandel) privately. Reports are handled privately. The maintainer may remove comments, lock discussions, or block people who
+issue (the **⋯** menu), or email the maintainer at **hello@manishkandel.com.np**. Reports are handled privately. The maintainer may remove comments, lock discussions, or block people who
 break this code, as described in the Contributor Covenant's enforcement guidelines.

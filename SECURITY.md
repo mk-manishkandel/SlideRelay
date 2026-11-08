@@ -5,9 +5,11 @@ seriously. Thank you for helping keep its users safe.
 
 ## Reporting a vulnerability
 
-**Please don't open a public issue.** Report it privately instead, with GitHub's private reporting:
-[**Report a vulnerability**](https://github.com/mk-manishkandel/SlideRelay/security/advisories/new).
-Only the maintainers can see it.
+**Please don't open a public issue.** Report it privately instead:
+
+- [**Report a vulnerability**](https://github.com/mk-manishkandel/SlideRelay/security/advisories/new)
+  with GitHub's private reporting (only the maintainers can see it), or
+- email **hello@manishkandel.com.np** with "SlideRelay security" in the subject.
 
 Include what you found, how to reproduce it, and what an attacker could do. You'll get a
 reply within 7 days. We'll agree a disclosure date with you (normally within 90 days) and

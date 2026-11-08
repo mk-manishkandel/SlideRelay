@@ -72,10 +72,6 @@
             </div>
           </li>
         </ol>
-
-        <div class="row">
-          <button id="done-btn" class="sr-btn">Done</button>
-        </div>
       </section>
 
       <section id="broadcasting" class="stack sr-card" hidden>
@@ -89,9 +85,19 @@
         <button id="stop-btn" class="sr-btn">Stop Broadcast</button>
       </section>
 
-      <footer class="sr-muted small">
-        Version <span id="version"></span> ·
-        <button id="help-btn" class="linklike" type="button">Help</button>
+      <footer class="foot">
+        <div class="foot-info sr-muted small">
+          <span
+            >Version <span id="version"></span> ·
+            <button id="update-btn" class="linklike" type="button">Check for updates</button> ·
+            <button id="help-btn" class="linklike" type="button">Help</button></span
+          >
+          <span id="update-status" role="status"></span>
+          <button id="install-btn" class="sr-btn sr-btn--primary small-btn" hidden>
+            Install and restart
+          </button>
+        </div>
+        <button id="done-btn" class="sr-btn">Done</button>
       </footer>
     </main>
   </body>

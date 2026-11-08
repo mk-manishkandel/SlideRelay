@@ -279,6 +279,26 @@ fn app_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
+/// The "Check for updates" link in the SlideRelay window.
+#[tauri::command]
+async fn check_for_updates(app: AppHandle) -> updates::UpdateCheck {
+    updates::check_now(&app).await
+}
+
+/// "Install and restart": only when no broadcast is running.
+#[tauri::command]
+fn install_update_now(app: AppHandle, state: SharedState) -> Result<(), String> {
+    if state.status().state != session::BroadcastState::Idle {
+        return Err("Stop the broadcast first. The update installs in a few seconds.".into());
+    }
+    if !updates::has_ready(&app) {
+        return Err("No update is ready yet.".into());
+    }
+    // Windows: the installer closes and reopens SlideRelay itself.
+    updates::install_if_ready(&app);
+    app.restart();
+}
+
 /// True when the one-time "let PowerPoint connect" step is still needed
 /// (macOS only; always false on Windows).
 #[tauri::command]
@@ -598,6 +618,8 @@ pub fn run() {
             run_command,
             answer_pairing,
             app_version,
+            check_for_updates,
+            install_update_now,
             connection_setup_needed,
             setup_connection,
             get_qr,

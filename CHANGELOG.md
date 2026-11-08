@@ -9,6 +9,16 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 ## [Unreleased]
 
+### Added
+
+- **Check for updates:** a link in the SlideRelay window checks right away, and
+  **Install and restart** installs a downloaded update without waiting for SlideRelay to quit.
+
+### Changed
+
+- SlideRelay also looks for updates every 6 hours while it's running, not only when it starts.
+- The setup guide's **Done** / **Finish later** button is now in the bottom row, on the right.
+
 ## [1.0.1] - 2026-11-08
 
 ### Changed

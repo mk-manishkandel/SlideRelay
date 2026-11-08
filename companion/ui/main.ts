@@ -6,6 +6,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import type { Status } from '@sliderelay/shared/protocol';
 
+type UpdateCheck =
+  | { state: 'unavailable' }
+  | { state: 'up-to-date' }
+  | { state: 'ready'; version: string }
+  | { state: 'failed'; message: string };
+
 interface SetupState {
   platform: 'macos' | 'windows';
   addinInstalled: boolean;
@@ -91,6 +97,44 @@ $('screen-btn').addEventListener('click', () => invoke('open_screen_permission_s
 $('fix-btn').addEventListener('click', () => invoke('open_screen_permission_settings'));
 $('help-btn').addEventListener('click', () => invoke('open_help'));
 $('done-btn').addEventListener('click', () => invoke('finish_setup'));
+
+// ---------- Updates ----------
+
+function showUpdate(result: UpdateCheck): void {
+  const status = $('update-status');
+  $('install-btn').hidden = result.state !== 'ready';
+  status.textContent =
+    result.state === 'up-to-date'
+      ? 'You have the newest version.'
+      : result.state === 'ready'
+        ? `Version ${result.version} is ready. It also installs by itself when SlideRelay quits.`
+        : result.state === 'unavailable'
+          ? "This test build doesn't update itself. Download SlideRelay from the project page."
+          : result.message;
+}
+
+$('update-btn').addEventListener('click', async () => {
+  const btn = $('update-btn') as HTMLButtonElement;
+  btn.disabled = true;
+  $('install-btn').hidden = true;
+  $('update-status').textContent = 'Checking…';
+  try {
+    showUpdate(await invoke<UpdateCheck>('check_for_updates'));
+  } catch (err) {
+    showUpdate({ state: 'failed', message: String(err) });
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$('install-btn').addEventListener('click', async () => {
+  $('update-status').textContent = 'Installing… SlideRelay reopens in a moment.';
+  try {
+    await invoke('install_update_now');
+  } catch (err) {
+    $('update-status').textContent = String(err);
+  }
+});
 $('stop-btn').addEventListener('click', () => invoke('run_command', { command: 'stop' }));
 
 // Permission changes happen in System Settings: check again when we're back.

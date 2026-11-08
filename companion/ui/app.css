@@ -78,6 +78,27 @@ footer {
   margin-top: auto;
 }
 
+/* Bottom row: version and updates on the left, Done / Finish later on the right. */
+.foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.foot-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.small-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
 h2 {
   margin: 0;
   font-size: 16px;

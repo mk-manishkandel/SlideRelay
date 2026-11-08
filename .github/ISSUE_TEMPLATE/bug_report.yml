@@ -1,0 +1,43 @@
+name: Something isn't working
+description: Report a problem with SlideRelay
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Security problem?** Please don't post it here: see the [security policy](https://github.com/mk-manishkandel/SlideRelay/security/policy).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Your computer
+      options:
+        - Windows 11
+        - Windows 10
+        - Mac (Apple silicon)
+        - Mac (Intel)
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: SlideRelay version (setup guide footer), macOS/Windows version, PowerPoint version.
+      placeholder: SlideRelay 1.0.0, macOS 15.2, PowerPoint 16.92
+  - type: input
+    id: viewers
+    attributes:
+      label: Viewers' devices (if relevant)
+      placeholder: iPhone 13 Safari, Android Chrome…
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log file
+      description: |
+        Drag the latest log file here. Mac: `~/Library/Logs/io.github.mkmanishkandel.sliderelay/`. Windows: `%LOCALAPPDATA%\io.github.mkmanishkandel.sliderelay\logs\`. Logs never contain slide content.

@@ -51,6 +51,10 @@ async function refreshSetup(): Promise<void> {
   document
     .querySelectorAll<HTMLElement>('[data-mac-only]')
     .forEach((el) => (el.hidden = s.platform !== 'macos'));
+  if (s.platform === 'windows') {
+    $('setup-intro').textContent =
+      'A few one-time steps. SlideRelay then lives in the system tray, next to the clock.';
+  }
   mark('step-addin', s.addinInstalled);
   mark('step-connect', !s.connectionNeeded);
   mark('step-screen', !s.screenPermissionNeeded);

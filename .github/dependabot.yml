@@ -1,0 +1,21 @@
+# Weekly, grouped dependency updates (security fixes come as soon as known).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns: ['*']
+  - package-ecosystem: cargo
+    directory: /companion/src-tauri
+    schedule:
+      interval: weekly
+    groups:
+      cargo:
+        patterns: ['*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

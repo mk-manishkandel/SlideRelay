@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Install help (Windows)
+    url: https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-WINDOWS.md#troubleshooting
+    about: Answers to the most common setup questions.
+  - name: Install help (Mac)
+    url: https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-MAC.md#troubleshooting
+    about: Answers to the most common setup questions.
+  - name: Report a security problem privately
+    url: https://github.com/mk-manishkandel/SlideRelay/security/advisories/new
+    about: Please don't post security problems in public issues.

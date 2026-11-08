@@ -1,0 +1,47 @@
+[package]
+name = "sliderelay"
+version = "0.1.0"
+description = "SlideRelay companion app: captures the PowerPoint slideshow window and streams it to students on the local network."
+authors = ["Manish Kandel and SlideRelay contributors"]
+license = "MIT"
+repository = "https://github.com/mk-manishkandel/SlideRelay"
+edition = "2021"
+rust-version = "1.80"
+
+[lib]
+name = "sliderelay_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+tauri-plugin-deep-link = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "sync", "time"] }
+axum = { version = "0.8", features = ["ws"] }
+tower-http = { version = "0.6", features = ["cors"] }
+http = "1"
+rand = "0.9"
+sha2 = "0.10"
+hex = "0.4"
+subtle = "2"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+
+[profile.release]
+# Small, fast binaries.
+codegen-units = 1
+lto = true
+opt-level = 3
+strip = true

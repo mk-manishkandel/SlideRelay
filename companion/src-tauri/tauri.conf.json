@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "SlideRelay",
+  "version": "../../package.json",
+  "identifier": "io.github.mkmanishkandel.sliderelay",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "SlideRelay",
+        "url": "index.html",
+        "width": 420,
+        "height": 560,
+        "minWidth": 360,
+        "minHeight": 480,
+        "resizable": true,
+        "visible": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi", "dmg", "app"],
+    "category": "Education",
+    "shortDescription": "Broadcast your slideshow to students' phones",
+    "longDescription": "SlideRelay streams the live PowerPoint slideshow window to students' phones and laptops over the local Wi-Fi. Students only need a browser.",
+    "copyright": "© SlideRelay contributors. MIT License.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["sliderelay"]
+      }
+    }
+  }
+}

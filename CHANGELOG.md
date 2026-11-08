@@ -9,6 +9,8 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-08
+
 ### Added
 
 - **Check for updates:** a link in the SlideRelay window checks right away, and
@@ -18,6 +20,11 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 - SlideRelay also looks for updates every 6 hours while it's running, not only when it starts.
 - The setup guide's **Done** / **Finish later** button is now in the bottom row, on the right.
+- **Cleaner presenting toolbar:** a coloured status pill (Live, Paused, Blank, Waiting), a drag
+  handle, clearer Blank icon, and Pause / Blank stay highlighted while they're on. Nothing wraps
+  onto two lines any more, and the toolbar is narrower.
+- **Simpler PowerPoint panel when SlideRelay isn't open:** one button, with the extra help folded
+  under "Trouble opening it?".
 
 ## [1.0.1] - 2026-11-08
 
@@ -58,6 +65,7 @@ The first public release.
 - Light and dark themes, WCAG AA contrast, plain words throughout.
 - No accounts, no cloud, no telemetry.
 
-[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/mk-manishkandel/SlideRelay/releases/tag/v1.0.0

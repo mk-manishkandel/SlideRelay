@@ -10,8 +10,15 @@ export const icons = {
     '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',
   ),
   play: svg('<path d="M7 5v14l11-7z"/>'),
-  blank: svg('<rect x="3" y="5" width="18" height="14" rx="2" fill="currentColor"/>'),
-  unblank: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 10l3 3 5-5"/>'),
+  /** A screen with a slash: hide the slide from viewers. */
+  blank: svg(
+    '<path d="M8 5h11a2 2 0 0 1 2 2v9M17 19H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2"/><path d="M3 3l18 18"/>',
+  ),
+  /** A screen: show the slides again. */
+  unblank: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 21h6"/>'),
+  grip: svg(
+    '<circle cx="9" cy="6" r="1" fill="currentColor"/><circle cx="15" cy="6" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="18" r="1" fill="currentColor"/><circle cx="15" cy="18" r="1" fill="currentColor"/>',
+  ),
   qr: svg(
     '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/>',
   ),

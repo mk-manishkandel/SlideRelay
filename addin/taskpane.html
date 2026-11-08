@@ -32,8 +32,10 @@
       </section>
 
       <section data-view="not-running" hidden>
-        <h1>The SlideRelay app is not running</h1>
-        <p class="sr-muted">Open it, and this panel will connect by itself.</p>
+        <div class="intro">
+          <h1>Open SlideRelay to start</h1>
+          <p class="sr-muted">This panel connects by itself once the app is running.</p>
+        </div>
         <a
           id="open-app-btn"
           class="sr-btn sr-btn--primary sr-btn--big"
@@ -41,21 +43,27 @@
           target="_blank"
           >Open SlideRelay</a
         >
-        <p class="small sr-muted">
-          Didn't open?
-          <a href="https://mk-manishkandel.github.io/SlideRelay/open.html" target="_blank"
-            >Open it from your browser</a
-          >
-        </p>
-        <p id="mac-hint" class="small sr-muted" hidden>
-          Already open? In the SlideRelay window, click <strong>Let PowerPoint connect</strong>.
-        </p>
-        <p class="small">
-          Don't have it yet?
-          <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest" target="_blank"
-            >Download SlideRelay</a
-          >
-        </p>
+        <details class="help">
+          <summary>Trouble opening it?</summary>
+          <ul>
+            <li>
+              Nothing happened?
+              <a href="https://mk-manishkandel.github.io/SlideRelay/open.html" target="_blank"
+                >Open it from your browser</a
+              >
+            </li>
+            <li id="mac-hint" hidden>
+              Already open? In the SlideRelay window, click
+              <strong>Let PowerPoint connect</strong>.
+            </li>
+            <li>
+              Not installed?
+              <a href="https://github.com/mk-manishkandel/SlideRelay#download" target="_blank"
+                >Download SlideRelay</a
+              >
+            </li>
+          </ul>
+        </details>
       </section>
 
       <section data-view="ended" hidden>

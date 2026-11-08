@@ -191,48 +191,120 @@ h2 {
   height: 100vh;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 8px 0 14px;
+  gap: 10px;
+  padding: 0 8px 0 6px;
   border: 1px solid var(--sr-border);
   box-sizing: border-box;
   cursor: grab;
   font-size: 13px;
+  white-space: nowrap;
 }
 
-.tb-status,
-.tb-viewers {
+.toolbar:active {
+  cursor: grabbing;
+}
+
+.tb-grip {
+  display: inline-flex;
+  width: 16px;
+  height: 20px;
+  color: var(--sr-text-muted);
+  opacity: 0.7;
+}
+
+.tb-grip svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Status: a tinted pill whose colour says what viewers see. */
+.tb-status {
+  --tone: var(--sr-live);
   display: flex;
   align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  font-weight: 600;
+  gap: 7px;
+  height: 28px;
+  padding: 0 12px 0 10px;
+  border-radius: 999px;
+  color: var(--sr-text);
+  font-weight: 700;
 }
 
-.tb-viewers {
-  color: var(--sr-text-muted);
-  font-variant-numeric: tabular-nums;
+/* Tints are drawn with an overlay at low opacity (works on macOS 13). */
+.tb-status,
+.tb-btn {
+  position: relative;
+  isolation: isolate;
+}
+
+.tb-status::before,
+.tb-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--tone, transparent);
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.tb-status[data-tone='warn'] {
+  --tone: var(--sr-warn);
+}
+
+.tb-status[data-tone='idle'] {
+  --tone: var(--sr-text-muted);
 }
 
 .tb-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--sr-live);
+  background: var(--tone);
 }
 
-.tb-dot[data-tone='warn'] {
-  background: var(--sr-warn);
+.tb-status[data-tone='live'] .tb-dot {
+  animation: tb-pulse 2s ease-in-out infinite;
 }
 
-.tb-dot[data-tone='idle'] {
-  background: var(--sr-text-muted);
+@keyframes tb-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-status[data-tone='live'] .tb-dot {
+    animation: none;
+  }
+}
+
+.tb-viewers {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--sr-text-muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-viewers .tb-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.tb-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--sr-border);
 }
 
 .tb-actions {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .tb-actions[hidden] {
@@ -241,22 +313,26 @@ h2 {
 
 .tb-ask {
   font-weight: 600;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
 .tb-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 10px;
+  height: 34px;
+  padding: 0 11px;
   border: 1px solid transparent;
   border-radius: var(--sr-radius-sm);
   background: transparent;
   color: var(--sr-text);
   font: inherit;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
 }
 
 .tb-btn:hover {
@@ -264,8 +340,22 @@ h2 {
   border-color: var(--sr-border);
 }
 
+.tb-btn:active {
+  transform: translateY(1px);
+}
+
 .tb-btn:focus-visible {
   outline: 3px solid var(--sr-accent);
+}
+
+/* Paused or blanked: the button stays highlighted, like a pressed switch. */
+.tb-btn {
+  --tone: transparent;
+}
+
+.tb-btn[aria-pressed='true'] {
+  --tone: var(--sr-warn);
+  border-color: var(--sr-warn);
 }
 
 .tb-icon {
@@ -280,7 +370,14 @@ h2 {
 }
 
 .tb-stop {
+  margin-left: 4px;
   color: var(--sr-live);
+}
+
+.tb-stop:hover {
+  --tone: var(--sr-live);
+  background: transparent;
+  border-color: var(--sr-live);
 }
 
 .tb-stop-yes {

@@ -28,9 +28,19 @@ function render(s: Status): void {
   let tone = 'live';
   if (s.blanked) [state, tone] = ['Blank', 'warn'];
   else if (s.paused) [state, tone] = ['Paused', 'warn'];
-  else if (s.state === 'waiting') [state, tone] = ['Waiting for slideshow', 'idle'];
+  else if (s.state === 'waiting') [state, tone] = ['Waiting', 'idle'];
   $('state').textContent = state;
-  $('dot').dataset.tone = tone;
+  $('status-pill').dataset.tone = tone;
+  $('status-pill').title =
+    s.state === 'waiting'
+      ? 'Start your slideshow and viewers see it live'
+      : s.blanked
+        ? 'Viewers see "Screen hidden by the presenter"'
+        : s.paused
+          ? 'Viewers keep seeing the slide from when you paused'
+          : 'Viewers see your slideshow live';
+  $('pause').setAttribute('aria-pressed', String(s.paused));
+  $('blank').setAttribute('aria-pressed', String(s.blanked));
   $('viewers').textContent = String(s.viewers);
   $('people').parentElement!.title =
     s.viewers === 1 ? '1 viewer watching' : `${s.viewers} viewers watching`;
@@ -55,7 +65,8 @@ function confirmStop(show: boolean): void {
 }
 
 $('people').innerHTML = icons.people;
-setButton('qr', 'qr', 'QR code', `Show the QR code on the projector (${key('Q')})`);
+$('grip').innerHTML = icons.grip;
+setButton('qr', 'qr', 'QR', `Show the QR code on the projector (${key('Q')})`);
 setButton('stop', 'stop', 'Stop', 'Stop the broadcast');
 
 $('pause').addEventListener('click', () => send(status?.paused ? 'resume' : 'pause'));

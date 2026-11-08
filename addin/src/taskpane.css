@@ -193,6 +193,45 @@ a.sr-btn {
   font-size: 13px;
 }
 
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.intro h1,
+.intro p {
+  margin: 0;
+}
+
+/* Secondary help, folded away so the main action stands alone. */
+.help {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--sr-text-muted);
+}
+
+.help summary {
+  cursor: pointer;
+  width: max-content;
+  color: var(--sr-text-muted);
+}
+
+.help summary:hover {
+  color: var(--sr-text);
+}
+
+.help ul {
+  margin: 10px 0 0;
+  padding: 12px 14px 12px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--sr-border);
+  border-radius: var(--sr-radius-sm);
+  background: var(--sr-surface);
+}
+
 .build {
   margin-top: 32px;
   font-size: 11px;

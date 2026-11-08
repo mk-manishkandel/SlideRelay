@@ -9,7 +9,8 @@
   <body class="toolbar-body">
     <!-- Drag anywhere that isn't a button to move the toolbar. -->
     <div class="toolbar" data-tauri-drag-region>
-      <span class="tb-status" data-tauri-drag-region>
+      <span id="grip" class="tb-grip" title="Drag to move" data-tauri-drag-region></span>
+      <span id="status-pill" class="tb-status" data-tauri-drag-region>
         <span id="dot" class="tb-dot" data-tauri-drag-region></span>
         <span id="state" data-tauri-drag-region>Live</span>
       </span>
@@ -17,6 +18,7 @@
         <span id="people" class="tb-icon" data-tauri-drag-region></span>
         <span id="viewers" data-tauri-drag-region>0</span>
       </span>
+      <span class="tb-divider" data-tauri-drag-region></span>
 
       <div id="actions" class="tb-actions">
         <button id="pause" class="tb-btn" type="button">
@@ -26,7 +28,7 @@
           <span class="tb-icon"></span><span class="tb-label"></span>
         </button>
         <button id="qr" class="tb-btn" type="button">
-          <span class="tb-icon"></span><span class="tb-label">QR code</span>
+          <span class="tb-icon"></span><span class="tb-label">QR</span>
         </button>
         <button id="stop" class="tb-btn tb-stop" type="button">
           <span class="tb-icon"></span><span class="tb-label">Stop</span>

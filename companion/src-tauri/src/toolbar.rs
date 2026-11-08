@@ -16,7 +16,7 @@ pub const TOOLBAR: &str = "toolbar";
 pub const QR: &str = "qr";
 
 /// Toolbar size in screen points.
-const WIDTH: f64 = 560.0;
+const WIDTH: f64 = 500.0;
 const HEIGHT: f64 = 52.0;
 /// Gap between the toolbar and the screen edge, in points.
 const MARGIN: f64 = 16.0;

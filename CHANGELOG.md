@@ -9,8 +9,22 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-11-08
+
+### Changed
+
+- **Clearer status window:** the broadcast card shows the state (Live, Paused, Blanked or
+  Waiting for slideshow) with a one-line explanation, the viewer count, the viewer link, and a
+  simple **Stop broadcast** link.
+- **Done / Finish later** is now plain text, just above the footer.
+
 ### Fixed
 
+- **Toolbar dragging:** the toolbar no longer jumps back while you move it or when the slideshow
+  starts. It stays where you put it, and opens in the same spot next time (until you change the
+  toolbar position in Settings).
+- **Toolbar highlights:** a button no longer stays highlighted after you click it.
+- The red **Live** badge no longer shows while paused or blanked.
 - PowerPoint's add-in info (the **i** in the SlideRelay panel) now shows the same version as the
   app. SlideRelay updates PowerPoint's copy of the add-in by itself after each update.
 
@@ -70,7 +84,8 @@ The first public release.
 - Light and dark themes, WCAG AA contrast, plain words throughout.
 - No accounts, no cloud, no telemetry.
 
-[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/mk-manishkandel/SlideRelay/releases/tag/v1.0.0

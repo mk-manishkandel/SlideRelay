@@ -27,19 +27,22 @@ const $ = (id: string) => document.getElementById(id) as HTMLElement;
 function render(status: Status): void {
   const broadcasting = status.state !== 'idle';
   $('broadcasting').hidden = !broadcasting;
-  $('live-pill').hidden = status.state !== 'live';
+  $('live-pill').hidden = status.state !== 'live' || status.paused || status.blanked;
   if (!broadcasting) return;
 
-  $('status-line').textContent =
+  const [label, tone, hint] =
     status.state === 'waiting'
-      ? 'Broadcasting: start your slideshow to go live'
+      ? ['Waiting for slideshow', 'idle', 'Start your slideshow to go live.']
       : status.blanked
-        ? 'Blanked'
+        ? ['Blanked', 'warn', 'Viewers see "Screen hidden by the presenter".']
         : status.paused
-          ? 'Paused'
-          : 'Live';
-  $('viewers').textContent =
-    status.viewers === 1 ? '1 viewer connected' : `${status.viewers} viewers connected`;
+          ? ['Paused', 'warn', 'Viewers keep seeing the slide from when you paused.']
+          : ['Live', 'live', ''];
+  $('status-line').textContent = label;
+  $('bc-state').dataset.tone = tone;
+  $('bc-hint').textContent = hint;
+  $('bc-hint').hidden = !hint;
+  $('viewers').textContent = status.viewers === 1 ? '1 viewer' : `${status.viewers} viewers`;
   $('link').textContent = status.url ? status.url.replace(/^https?:\/\//, '') : '';
   $('problem-card').hidden = !status.problem;
   $('problem-text').textContent = status.problem ?? '';
@@ -68,7 +71,6 @@ async function refreshSetup(): Promise<void> {
     s.addinInstalled &&
     (s.platform !== 'macos' || (!s.connectionNeeded && !s.screenPermissionNeeded));
   $('setup-title').textContent = allDone ? 'SlideRelay is ready' : 'Set up SlideRelay';
-  $('done-btn').classList.toggle('sr-btn--primary', allDone);
   $('done-btn').textContent = allDone ? 'Done' : 'Finish later';
 }
 

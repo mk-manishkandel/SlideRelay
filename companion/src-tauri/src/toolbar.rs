@@ -8,7 +8,8 @@
 use crate::config::ToolbarPosition;
 use crate::session::BroadcastState;
 use crate::state::{AppState, Command};
-use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager, Monitor, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 
@@ -207,22 +208,82 @@ fn toolbar_window(app: &AppHandle) -> Option<WebviewWindow> {
     }
 }
 
-/// Shows the toolbar on the presenter's screen, at their chosen position.
+// Where the presenter dragged the toolbar. Once they've moved it, SlideRelay
+// stops placing it automatically (no jumping back mid-drag or when the
+// slideshow starts), and the next broadcast reopens it in the same spot.
+static USER_PLACED: AtomicBool = AtomicBool::new(false);
+static USER_SPOT: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+static LAST_SETTING: Mutex<Option<ToolbarPosition>> = Mutex::new(None);
+
+/// The presenter started dragging the toolbar.
+pub fn user_moved() {
+    USER_PLACED.store(true, Ordering::SeqCst);
+}
+
+fn forget_user_spot() {
+    USER_PLACED.store(false, Ordering::SeqCst);
+    *USER_SPOT.lock().unwrap_or_else(|e| e.into_inner()) = None;
+}
+
+/// True if (x, y) is on one of the connected screens.
+fn on_a_screen(app: &AppHandle, (x, y): (i32, i32)) -> bool {
+    app.available_monitors()
+        .map(|monitors| {
+            monitors.iter().any(|m| {
+                let (p, s) = (m.position(), m.size());
+                x >= p.x
+                    && y >= p.y
+                    && x < p.x + s.width as i32 - 40
+                    && y < p.y + s.height as i32 - 20
+            })
+        })
+        .unwrap_or(false)
+}
+
+/// Shows the toolbar where the presenter last put it, or else at their
+/// chosen position on the presenter's screen.
 pub fn show_toolbar(app: &AppHandle) {
     let Some(window) = toolbar_window(app) else {
         return;
     };
-    place_toolbar(app, &window);
+    let setting = app.state::<Arc<AppState>>().settings().toolbar_position;
+    *LAST_SETTING.lock().unwrap_or_else(|e| e.into_inner()) = Some(setting);
+    let spot = *USER_SPOT.lock().unwrap_or_else(|e| e.into_inner());
+    match spot.filter(|&p| on_a_screen(app, p)) {
+        Some((x, y)) => {
+            USER_PLACED.store(true, Ordering::SeqCst);
+            let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
+        }
+        None => {
+            forget_user_spot();
+            place_toolbar(app, &window);
+        }
+    }
     let _ = window.show();
 }
 
-/// Moves the toolbar if the slideshow moved to another screen or the
-/// presenter changed the position setting.
+/// Moves the toolbar if the slideshow moved to another screen, unless the
+/// presenter has placed it themselves.
 pub fn reposition_toolbar(app: &AppHandle) {
+    if USER_PLACED.load(Ordering::SeqCst) {
+        return;
+    }
     if let Some(window) = app.get_webview_window(TOOLBAR) {
         if window.is_visible().unwrap_or(false) {
             place_toolbar(app, &window);
         }
+    }
+}
+
+/// The position setting changed: that choice wins over a dragged spot.
+pub fn position_setting_changed(app: &AppHandle, position: &ToolbarPosition) {
+    let mut last = LAST_SETTING.lock().unwrap_or_else(|e| e.into_inner());
+    let changed = last.as_ref().is_some_and(|old| old != position);
+    *last = Some(position.clone());
+    drop(last);
+    if changed {
+        forget_user_spot();
+        reposition_toolbar(app);
     }
 }
 
@@ -238,6 +299,11 @@ fn place_toolbar(app: &AppHandle, window: &WebviewWindow) {
 
 pub fn hide_toolbar(app: &AppHandle) {
     if let Some(window) = app.get_webview_window(TOOLBAR) {
+        if USER_PLACED.load(Ordering::SeqCst) {
+            if let Ok(p) = window.outer_position() {
+                *USER_SPOT.lock().unwrap_or_else(|e| e.into_inner()) = Some((p.x, p.y));
+            }
+        }
         let _ = window.hide();
     }
 }

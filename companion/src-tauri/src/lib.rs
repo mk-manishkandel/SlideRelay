@@ -86,7 +86,7 @@ impl Ui for TauriUi {
 
     fn settings_changed(&self, settings: &Settings) {
         apply_launch_at_login(&self.app, settings.launch_at_login);
-        toolbar::reposition_toolbar(&self.app);
+        toolbar::position_setting_changed(&self.app, &settings.toolbar_position);
         // A new network choice shows up in the link straight away.
         if let Some(state) = self.app.try_state::<Arc<AppState>>() {
             refresh_link(&state);
@@ -283,6 +283,12 @@ fn app_version() -> &'static str {
 #[tauri::command]
 async fn check_for_updates(app: AppHandle) -> updates::UpdateCheck {
     updates::check_now(&app).await
+}
+
+/// The presenter started dragging the toolbar: stop placing it for them.
+#[tauri::command]
+fn toolbar_moved() {
+    toolbar::user_moved();
 }
 
 /// "Install and restart": only when no broadcast is running.
@@ -624,6 +630,7 @@ pub fn run() {
             setup_connection,
             get_qr,
             toolbar_command,
+            toolbar_moved,
             hide_qr,
             screen_permission_needed,
             open_screen_permission_settings,

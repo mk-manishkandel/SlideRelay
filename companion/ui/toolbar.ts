@@ -82,5 +82,39 @@ $('stop-yes').addEventListener('click', () => {
   send('stop');
 });
 
+// ---------- Hover and press highlights ----------
+// The toolbar never becomes the active window, so the browser doesn't always
+// hear the mouse leave, and CSS :hover / :active can get stuck after a click.
+// We track them ourselves and always clear them after a click.
+const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.tb-btn'));
+const clearHighlights = () => buttons.forEach((b) => b.classList.remove('is-hover', 'is-pressed'));
+
+buttons.forEach((b) => {
+  b.addEventListener('pointerenter', () => b.classList.add('is-hover'));
+  b.addEventListener('pointerleave', () => b.classList.remove('is-hover', 'is-pressed'));
+  b.addEventListener('pointerdown', () => b.classList.add('is-pressed'));
+  b.addEventListener('pointerup', () => b.classList.remove('is-pressed'));
+  b.addEventListener('click', () => {
+    clearHighlights();
+    b.blur();
+  });
+});
+document.documentElement.addEventListener('pointerleave', clearHighlights);
+window.addEventListener('blur', clearHighlights);
+// If the "leave" never arrives, the next move elsewhere clears it.
+document.addEventListener('pointermove', (e) => {
+  const over = (e.target as Element).closest('.tb-btn');
+  buttons.forEach((b) => b !== over && b.classList.remove('is-hover', 'is-pressed'));
+});
+
+// Dragging (anywhere that isn't a button): from now on the toolbar stays
+// where the presenter puts it.
+$('toolbar').addEventListener('mousedown', (e) => {
+  if (e.button === 0 && !(e.target as Element).closest('button')) {
+    clearHighlights();
+    invoke('toolbar_moved').catch(() => {});
+  }
+});
+
 listen<Status>('status', (e) => render(e.payload));
 invoke<Status>('get_status').then(render);

@@ -1,6 +1,6 @@
 [package]
 name = "sliderelay"
-version = "1.0.2"
+version = "1.0.3"
 description = "SlideRelay companion app: captures the PowerPoint slideshow window and streams it to viewers on the local network."
 authors = ["Manish Kandel and SlideRelay contributors"]
 license = "MIT"

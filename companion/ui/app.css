@@ -78,6 +78,104 @@ footer {
   margin-top: auto;
 }
 
+/* Broadcast status card. */
+.bc {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bc[hidden] {
+  display: none;
+}
+
+.bc p {
+  margin: 0;
+}
+
+.bc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bc-state {
+  --tone: var(--sr-live);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.bc-state[data-tone='warn'] {
+  --tone: var(--sr-warn);
+}
+
+.bc-state[data-tone='idle'] {
+  --tone: var(--sr-text-muted);
+}
+
+.bc-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--tone);
+}
+
+#bc-hint {
+  margin-top: -6px;
+}
+
+.bc-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sr-border);
+}
+
+.bc-problem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bc-problem[hidden] {
+  display: none;
+}
+
+.linklike.bc-stop {
+  align-self: flex-start;
+  color: var(--sr-live);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.linklike.bc-stop:hover {
+  text-decoration: underline;
+}
+
+/* Done / Finish later: plain text, just above the footer. */
+.done-row {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.linklike.done-link {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.linklike.done-link:hover {
+  text-decoration: underline;
+}
+
+.done-row + footer {
+  margin-top: 0;
+}
+
 /* Bottom row: version and updates on the left, Done / Finish later on the right. */
 .foot {
   display: flex;
@@ -198,10 +296,6 @@ h2 {
   cursor: grab;
   font-size: 13px;
   white-space: nowrap;
-}
-
-.toolbar:active {
-  cursor: grabbing;
 }
 
 .tb-grip {
@@ -335,12 +429,12 @@ h2 {
     border-color 0.12s;
 }
 
-.tb-btn:hover {
+.tb-btn.is-hover {
   background: var(--sr-bg);
   border-color: var(--sr-border);
 }
 
-.tb-btn:active {
+.tb-btn.is-pressed {
   transform: translateY(1px);
 }
 
@@ -374,7 +468,7 @@ h2 {
   color: var(--sr-live);
 }
 
-.tb-stop:hover {
+.tb-stop.is-hover {
   --tone: var(--sr-live);
   background: transparent;
   border-color: var(--sr-live);
@@ -385,7 +479,7 @@ h2 {
   color: #fff;
 }
 
-.tb-stop-yes:hover {
+.tb-stop-yes.is-hover {
   background: var(--sr-live);
   filter: brightness(1.1);
 }

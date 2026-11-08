@@ -14,6 +14,25 @@
         <span id="live-pill" class="live-pill" hidden>Live</span>
       </header>
 
+      <section id="broadcasting" class="bc sr-card" hidden>
+        <div class="bc-head">
+          <span id="bc-state" class="bc-state"
+            ><span class="bc-dot"></span><span id="status-line"></span
+          ></span>
+          <span id="viewers" class="sr-muted small"></span>
+        </div>
+        <p id="bc-hint" class="sr-muted small"></p>
+        <div class="bc-link">
+          <span class="sr-muted small">Viewer link</span>
+          <span id="link" class="link"></span>
+        </div>
+        <div id="problem-card" class="bc-problem" hidden>
+          <p id="problem-text"></p>
+          <button id="fix-btn" class="sr-btn sr-btn--primary" hidden>Fix this</button>
+        </div>
+        <button id="stop-btn" class="linklike bc-stop" type="button">Stop broadcast</button>
+      </section>
+
       <!-- Setup guide: shown on first launch, and from the menu any time. -->
       <section id="setup" class="stack">
         <div class="stack tight">
@@ -74,17 +93,9 @@
         </ol>
       </section>
 
-      <section id="broadcasting" class="stack sr-card" hidden>
-        <h2 id="status-line"></h2>
-        <p id="viewers" class="sr-muted">0 viewers connected</p>
-        <p id="link" class="link"></p>
-        <div id="problem-card" class="stack" hidden>
-          <p id="problem-text"></p>
-          <button id="fix-btn" class="sr-btn sr-btn--primary" hidden>Fix this</button>
-        </div>
-        <button id="stop-btn" class="sr-btn">Stop Broadcast</button>
-      </section>
-
+      <div class="done-row">
+        <button id="done-btn" class="linklike done-link" type="button">Done</button>
+      </div>
       <footer class="foot">
         <div class="foot-info sr-muted small">
           <span
@@ -97,7 +108,6 @@
             Install and restart
           </button>
         </div>
-        <button id="done-btn" class="sr-btn">Done</button>
       </footer>
     </main>
   </body>

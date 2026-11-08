@@ -38,6 +38,22 @@ Logs are written to:
 - Mac: `~/Library/Logs/io.github.mkmanishkandel.sliderelay/`
 - Windows: `%LOCALAPPDATA%\io.github.mkmanishkandel.sliderelay\logs\`
 
+### Mac: keep Screen Recording permission between builds
+
+macOS ties Screen Recording permission to the app's signature. Unsigned ("ad hoc") test
+builds get a new signature each time, so the permission resets after every rebuild. To
+avoid that, sign test builds with a stable certificate. The maintainer's is
+"SlideRelay Open Source" (created by `scripts/setup-release-keys.sh`; import
+`~/.tauri/sliderelay-macos/cert.p12` into the login keychain). Contributors can make their own
+in Keychain Access (**Certificate Assistant → Create a Certificate…**, type _Code Signing_).
+
+```sh
+APPLE_SIGNING_IDENTITY="SlideRelay Open Source" npm run tauri -w companion -- build --debug --bundles app
+open companion/src-tauri/target/debug/bundle/macos/SlideRelay.app
+```
+
+Grant Screen Recording once; later builds signed the same way keep it.
+
 ## Run the add-in locally
 
 Office only loads add-ins over HTTPS, so create a trusted local certificate once:

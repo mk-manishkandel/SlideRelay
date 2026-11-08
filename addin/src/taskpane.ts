@@ -7,12 +7,23 @@
  */
 import '@sliderelay/shared/theme.css';
 import './taskpane.css';
-import type { Command, Status } from '@sliderelay/shared/protocol';
+import type {
+  Command,
+  Quality,
+  SettingsView,
+  Status,
+  TeacherSettings,
+  ToolbarPosition,
+} from '@sliderelay/shared/protocol';
+import { icons } from '@sliderelay/shared/icons';
 import {
+  ApiError,
   CompanionError,
   checkCompanion,
+  getSettings,
   getStatus,
   pair,
+  saveSettings,
   sendCommand,
   subscribe,
   type ConnectionProblem,
@@ -22,15 +33,28 @@ import { isStudentLink, qrSvg, shortLink } from './qr';
 
 declare const __BUILD_ID__: string;
 
-type View = 'checking' | ConnectionProblem | 'idle' | 'broadcasting';
+type View = 'checking' | ConnectionProblem | 'idle' | 'broadcasting' | 'settings';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 // ---------- View switching ----------
 
 let currentView: View = 'checking';
+/** While Settings is open, status updates wait here instead of switching views. */
+let settingsOpen = false;
+let viewBehindSettings: View = 'idle';
 
 function showView(view: View): void {
+  const connected = view === 'idle' || view === 'broadcasting' || view === 'settings';
+  if (settingsOpen && view !== 'settings') {
+    if (connected) {
+      viewBehindSettings = view;
+      return;
+    }
+    // Lost the app: leave Settings and show what's wrong.
+    settingsOpen = false;
+  }
+  $('settings-btn').hidden = !connected || view === 'settings';
   if (view === currentView) return;
   currentView = view;
   document.querySelectorAll<HTMLElement>('[data-view]').forEach((el) => {
@@ -48,7 +72,10 @@ function showError(message: string | null): void {
 
 // ---------- Rendering the live status ----------
 
+let lastStatus: Status | null = null;
+
 function render(status: Status): void {
+  lastStatus = status;
   const broadcasting = status.state !== 'idle';
   showView(broadcasting ? 'broadcasting' : 'idle');
   $('live-pill').hidden = status.state !== 'live';
@@ -143,6 +170,116 @@ async function copyLink(): Promise<void> {
   setTimeout(() => (button.textContent = 'Copy link'), 1500);
 }
 
+// ---------- Settings ----------
+
+let settingsView: SettingsView | null = null;
+
+function fillSettings(view: SettingsView): void {
+  settingsView = view;
+  const s = view.settings;
+  $<HTMLSelectElement>('set-quality').value = s.quality;
+  // Pick the closest offered speed (an older app may have saved another).
+  const fps = [5, 10, 15, 30].reduce((a, b) =>
+    Math.abs(b - s.maxFps) < Math.abs(a - s.maxFps) ? b : a,
+  );
+  $<HTMLSelectElement>('set-fps').value = String(fps);
+  $<HTMLInputElement>('set-pin-on').checked = s.pin !== null;
+  $<HTMLInputElement>('set-pin').value = s.pin ?? '';
+  $('set-pin').hidden = s.pin === null;
+
+  const network = $<HTMLSelectElement>('set-network');
+  const options = [new Option('Automatic (recommended)', '')];
+  for (const a of view.adapters) options.push(new Option(`${a.name} (${a.ip})`, a.ip));
+  if (s.lanIp && !view.adapters.some((a) => a.ip === s.lanIp)) {
+    options.push(new Option(`${s.lanIp} (not connected now)`, s.lanIp));
+  }
+  network.replaceChildren(...options);
+  network.value = s.lanIp ?? '';
+
+  const port = $<HTMLInputElement>('set-port');
+  port.value = s.port === 0 ? '' : String(s.port);
+  const live = lastStatus !== null && lastStatus.state !== 'idle';
+  port.disabled = live;
+  const inUse = view.portInUse ? `Now using port ${view.portInUse}. ` : '';
+  $('port-hint').textContent = live
+    ? `${inUse}Stop the broadcast to change it.`
+    : `${inUse}Leave empty unless your school network needs a specific port.`;
+
+  $<HTMLSelectElement>('set-toolbar').value = s.toolbarPosition;
+  $<HTMLInputElement>('set-login').checked = s.launchAtLogin;
+}
+
+/** Reads the form; returns a plain-words problem instead if something's off. */
+function readSettings(base: TeacherSettings): TeacherSettings | string {
+  const pinOn = $<HTMLInputElement>('set-pin-on').checked;
+  const pin = $<HTMLInputElement>('set-pin').value.trim();
+  if (pinOn && !/^\d{4,8}$/.test(pin)) return 'The PIN must be 4 to 8 digits.';
+  const portText = $<HTMLInputElement>('set-port').value.trim();
+  const port = portText === '' ? 0 : Number(portText);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    return 'The port must be a number up to 65535, or empty for automatic.';
+  }
+  return {
+    ...base,
+    quality: $<HTMLSelectElement>('set-quality').value as Quality,
+    maxFps: Number($<HTMLSelectElement>('set-fps').value),
+    pin: pinOn ? pin : null,
+    lanIp: $<HTMLSelectElement>('set-network').value || null,
+    port,
+    toolbarPosition: $<HTMLSelectElement>('set-toolbar').value as ToolbarPosition,
+    launchAtLogin: $<HTMLInputElement>('set-login').checked,
+  };
+}
+
+function settingsError(message: string | null): void {
+  $('settings-error').textContent = message ?? '';
+  $('settings-error').hidden = !message;
+}
+
+async function openSettings(): Promise<void> {
+  showError(null);
+  settingsError(null);
+  try {
+    fillSettings(await getSettings());
+  } catch (err) {
+    if (err instanceof CompanionError) showView(err.problem);
+    else showError("Couldn't load the settings. Please try again.");
+    return;
+  }
+  viewBehindSettings = currentView;
+  showView('settings');
+  settingsOpen = true;
+  $('set-quality').focus();
+}
+
+function closeSettings(): void {
+  settingsOpen = false;
+  showView(viewBehindSettings);
+  $('settings-btn').focus();
+}
+
+async function submitSettings(): Promise<void> {
+  if (!settingsView) return;
+  const next = readSettings(settingsView.settings);
+  if (typeof next === 'string') {
+    settingsError(next);
+    return;
+  }
+  const save = $<HTMLButtonElement>('settings-save');
+  save.disabled = true;
+  settingsError(null);
+  try {
+    settingsView = await saveSettings(next);
+    closeSettings();
+  } catch (err) {
+    if (err instanceof ApiError && err.reason) settingsError(err.reason);
+    else if (err instanceof CompanionError) showView(err.problem);
+    else settingsError("Couldn't save. Please try again.");
+  } finally {
+    save.disabled = false;
+  }
+}
+
 // ---------- Connecting ----------
 
 let unsubscribe: (() => void) | null = null;
@@ -220,6 +357,22 @@ function wire(): void {
   // ignored.) "Didn't open?" falls back to a page in the teacher's browser.
   // Meanwhile keep retrying so the panel connects as soon as the app is up.
   $('open-app-btn').addEventListener('click', () => scheduleRetry());
+
+  $('settings-btn').innerHTML = icons.gear; // static icon markup from shared/icons
+  $('settings-btn').addEventListener('click', openSettings);
+  $('settings-cancel').addEventListener('click', closeSettings);
+  $('settings-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitSettings();
+  });
+  $('set-pin-on').addEventListener('change', () => {
+    const on = $<HTMLInputElement>('set-pin-on').checked;
+    $('set-pin').hidden = !on;
+    if (on) $('set-pin').focus();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && settingsOpen) closeSettings();
+  });
 
   $('start-btn').addEventListener('click', () => run('start'));
   for (const id of ['pause-btn', 'blank-btn']) {

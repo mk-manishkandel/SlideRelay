@@ -78,11 +78,36 @@ impl Ui for TauriUi {
         show_qr_window(&self.app);
     }
 
+    fn settings_changed(&self, settings: &Settings) {
+        apply_launch_at_login(&self.app, settings.launch_at_login);
+        // A new network choice shows up in the link straight away.
+        if let Some(state) = self.app.try_state::<Arc<AppState>>() {
+            refresh_link(&state);
+        }
+    }
+
     fn broadcast_changed(&self, broadcasting: bool) {
         tracing::info!(
             "broadcast {}",
             if broadcasting { "started" } else { "stopped" }
         );
+    }
+}
+
+/// Turns "Start SlideRelay when I log in" on or off in the operating system.
+fn apply_launch_at_login(app: &AppHandle, on: bool) {
+    use tauri_plugin_autostart::ManagerExt;
+    let launcher = app.autolaunch();
+    if launcher.is_enabled().unwrap_or(false) == on {
+        return;
+    }
+    let result = if on {
+        launcher.enable()
+    } else {
+        launcher.disable()
+    };
+    if let Err(e) = result {
+        tracing::warn!("could not change launch at login: {e}");
     }
 }
 
@@ -341,62 +366,79 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Starts the students' web server and keeps the link's network address
-/// up to date (e.g. if the laptop moves to another Wi-Fi).
+/// Starts the students' web server (restarting it if the teacher changes
+/// the port) and keeps the link's network address up to date (e.g. if the
+/// laptop moves to another Wi-Fi).
 fn start_student_server(state: Arc<AppState>) {
+    let server_state = state.clone();
     tauri::async_runtime::spawn(async move {
-        let preferred = state
-            .settings
-            .read()
-            .unwrap_or_else(|e| e.into_inner())
-            .port;
-        let listener = match student_server::bind(preferred).await {
-            Ok(l) => l,
-            Err(e) => {
-                tracing::error!("student server could not start: {e}");
-                state.update(|s| {
-                    s.set_problem(Some(
-                        "SlideRelay couldn't open a network port. Restart SlideRelay and try again."
-                            .into(),
-                    ))
-                });
-                return;
-            }
-        };
-        let port = listener.local_addr().map(|a| a.port()).unwrap_or(80);
-
-        let refresh_state = state.clone();
-        tauri::async_runtime::spawn(async move {
-            loop {
-                let preferred_ip = refresh_state
-                    .settings
-                    .read()
-                    .unwrap_or_else(|e| e.into_inner())
-                    .lan_ip
-                    .clone();
-                let ip = network::choose_lan_ip(&network::adapters(), preferred_ip.as_deref());
-                let url = ip.map(|ip| network::base_url(ip, port));
-                let changed = {
-                    let mut base = refresh_state
-                        .base_url
-                        .write()
-                        .unwrap_or_else(|e| e.into_inner());
-                    let changed = *base != url;
-                    *base = url.clone();
-                    changed
-                };
-                if changed {
-                    tracing::info!("student link base: {url:?}");
-                    refresh_state.update(|_| ());
+        let state = server_state;
+        let mut port_rx = state.watch_port();
+        loop {
+            let preferred = *port_rx.borrow_and_update();
+            let listener = match student_server::bind(preferred).await {
+                Ok(l) => l,
+                Err(e) => {
+                    tracing::error!("student server could not start: {e}");
+                    state.update(|s| {
+                        s.set_problem(Some(
+                            "SlideRelay couldn't open a network port. Restart SlideRelay and try again."
+                                .into(),
+                        ))
+                    });
+                    if port_rx.changed().await.is_err() {
+                        return;
+                    }
+                    continue;
                 }
-                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+            };
+            let port = listener.local_addr().map(|a| a.port()).ok();
+            *state
+                .student_port
+                .write()
+                .unwrap_or_else(|e| e.into_inner()) = port;
+            refresh_link(&state);
+            tokio::select! {
+                result = student_server::serve(listener, state.clone()) => {
+                    if let Err(e) = result {
+                        tracing::error!("student server stopped: {e}");
+                    }
+                    return;
+                }
+                changed = port_rx.changed() => {
+                    if changed.is_err() {
+                        return;
+                    }
+                    tracing::info!("student port setting changed; restarting the student server");
+                }
             }
-        });
-
-        if let Err(e) = student_server::serve(listener, state).await {
-            tracing::error!("student server stopped: {e}");
         }
     });
+
+    tauri::async_runtime::spawn(async move {
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+            refresh_link(&state);
+        }
+    });
+}
+
+/// Works out the student link from the current network and port.
+fn refresh_link(state: &AppState) {
+    let preferred_ip = state.settings().lan_ip;
+    let port = *state.student_port.read().unwrap_or_else(|e| e.into_inner());
+    let ip = network::choose_lan_ip(&network::adapters(), preferred_ip.as_deref());
+    let url = ip.zip(port).map(|(ip, port)| network::base_url(ip, port));
+    let changed = {
+        let mut base = state.base_url.write().unwrap_or_else(|e| e.into_inner());
+        let changed = *base != url;
+        *base = url.clone();
+        changed
+    };
+    if changed {
+        tracing::info!("student link base: {url:?}");
+        state.update(|_| ());
+    }
 }
 
 /// True if a one-time setup step is still needed (shown in the main window).
@@ -429,6 +471,10 @@ pub fn run() {
             show_main_window(app);
         }))
         .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![AUTOSTART_ARG]),
+        ))
         .invoke_handler(tauri::generate_handler![
             get_status,
             run_command,
@@ -460,6 +506,7 @@ pub fn run() {
                 app: handle.clone(),
             });
             let state = AppState::new(settings, pairing, ui);
+            state.set_settings_path(paths.settings.clone());
             app.manage(state.clone());
             app.manage(paths.clone());
 

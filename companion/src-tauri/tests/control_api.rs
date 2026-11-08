@@ -234,3 +234,69 @@ async fn foreign_http2_authority_is_rejected() {
         .unwrap();
     assert_eq!(resp.status(), StatusCode::MISDIRECTED_REQUEST);
 }
+
+#[tokio::test]
+async fn settings_need_a_token() {
+    let (app, _) = app();
+    let resp = app
+        .oneshot(req("GET", "/v1/settings").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn paired_addin_can_read_and_change_settings() {
+    let (app, state) = app();
+    let token = paired_token(&app, &state).await;
+    let auth = format!("Bearer {token}");
+
+    let resp = app
+        .clone()
+        .oneshot(
+            req("GET", "/v1/settings")
+                .header("authorization", &auth)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let mut body = json(resp).await;
+    assert_eq!(body["settings"]["quality"], "balanced");
+    assert!(body["adapters"].is_array());
+
+    // Change the PIN and quality.
+    body["settings"]["pin"] = "4321".into();
+    body["settings"]["quality"] = "high".into();
+    let resp = app
+        .clone()
+        .oneshot(
+            req("POST", "/v1/settings")
+                .header("authorization", &auth)
+                .header("content-type", "application/json")
+                .body(Body::from(body["settings"].to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(json(resp).await["settings"]["pin"], "4321");
+    assert_eq!(state.settings().pin.as_deref(), Some("4321"));
+
+    // A bad PIN is refused with a plain-words reason, and nothing changes.
+    body["settings"]["pin"] = "12".into();
+    let resp = app
+        .oneshot(
+            req("POST", "/v1/settings")
+                .header("authorization", &auth)
+                .header("content-type", "application/json")
+                .body(Body::from(body["settings"].to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(json(resp).await["error"], "The PIN must be 4 to 8 digits.");
+    assert_eq!(state.settings().pin.as_deref(), Some("4321"));
+}

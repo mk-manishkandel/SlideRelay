@@ -14,8 +14,11 @@ import {
   type Hello,
   type PairPoll,
   type PairStart,
+  type ApiErrorBody,
   type ServerMessage,
+  type SettingsView,
   type Status,
+  type TeacherSettings,
 } from '@sliderelay/shared/protocol';
 
 const TOKEN_KEY = 'sliderelay.token';
@@ -30,6 +33,16 @@ export type ConnectionProblem =
 export class CompanionError extends Error {
   constructor(public readonly problem: ConnectionProblem) {
     super(problem);
+  }
+}
+
+/** The app refused a request; `reason` is a plain-words message, if any. */
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly reason: string | null,
+  ) {
+    super(reason ?? `Companion answered ${status}`);
   }
 }
 
@@ -94,7 +107,15 @@ async function request<T>(path: string, init: RequestInit = {}, timeoutMs = 3000
     saveToken(null);
     throw new CompanionError('not-paired');
   }
-  if (!response.ok) throw new Error(`Companion answered ${response.status}`);
+  if (!response.ok) {
+    let reason: string | null = null;
+    try {
+      reason = ((await response.json()) as ApiErrorBody).error ?? null;
+    } catch {
+      /* no JSON body */
+    }
+    throw new ApiError(response.status, reason);
+  }
   return (await response.json()) as T;
 }
 
@@ -138,6 +159,18 @@ export function getStatus(): Promise<Status> {
 
 export function sendCommand(command: Command): Promise<Status> {
   return request<Status>(`/v1/broadcast/${command}`, { method: 'POST' });
+}
+
+export function getSettings(): Promise<SettingsView> {
+  return request<SettingsView>('/v1/settings');
+}
+
+export function saveSettings(settings: TeacherSettings): Promise<SettingsView> {
+  return request<SettingsView>('/v1/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  });
 }
 
 /**

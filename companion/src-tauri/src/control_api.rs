@@ -9,6 +9,8 @@
 //! The JSON shapes mirror `shared/protocol.ts`. See that file for the
 //! versioning rules.
 
+use crate::config::Settings;
+use crate::network;
 use crate::pairing::PairError;
 use crate::state::{AppState, Command};
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
@@ -68,6 +70,7 @@ pub fn router(state: Arc<AppState>, ports: &[u16]) -> Router {
         .route("/v1/status", get(status))
         .route("/v1/broadcast/{command}", post(command))
         .route("/v1/events", get(events))
+        .route("/v1/settings", get(get_settings).post(save_settings))
         .layer(middleware::from_fn_with_state(ctx.clone(), guard))
         .layer(cors)
         .with_state(ctx)
@@ -205,6 +208,69 @@ async fn command(
     match ctx.state.run(cmd) {
         Ok(status) => Json(status).into_response(),
         Err(_) => (StatusCode::CONFLICT, Json(ctx.state.status())).into_response(),
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AdapterInfo {
+    name: String,
+    ip: String,
+}
+
+/// GET/POST /v1/settings: the settings plus what the panel needs to show them.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SettingsView {
+    settings: Settings,
+    /// Network adapters students could reach (for "Network").
+    adapters: Vec<AdapterInfo>,
+    /// The port students are using right now.
+    port_in_use: Option<u16>,
+}
+
+fn settings_view(state: &AppState) -> SettingsView {
+    SettingsView {
+        settings: state.settings(),
+        adapters: network::usable_adapters(&network::adapters())
+            .into_iter()
+            .map(|a| AdapterInfo {
+                name: a.name,
+                ip: a.ip.to_string(),
+            })
+            .collect(),
+        port_in_use: *state.student_port.read().unwrap_or_else(|e| e.into_inner()),
+    }
+}
+
+async fn get_settings(State(ctx): State<Ctx>, headers: HeaderMap) -> Response {
+    if !authorized(&ctx, &headers) {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+    Json(settings_view(&ctx.state)).into_response()
+}
+
+async fn save_settings(
+    State(ctx): State<Ctx>,
+    headers: HeaderMap,
+    body: axum::body::Bytes,
+) -> Response {
+    if !authorized(&ctx, &headers) {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+    let error = |message: &str| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": message })),
+        )
+            .into_response()
+    };
+    let Ok(new) = serde_json::from_slice::<Settings>(&body) else {
+        return error("Those settings couldn't be read.");
+    };
+    match ctx.state.save_settings(new) {
+        Ok(_) => Json(settings_view(&ctx.state)).into_response(),
+        Err(e) => error(&e.0),
     }
 }
 

@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./theme.css": "./theme.css",
-    "./protocol": "./protocol.ts"
+    "./protocol": "./protocol.ts",
+    "./icons": "./icons.ts"
   }
 }

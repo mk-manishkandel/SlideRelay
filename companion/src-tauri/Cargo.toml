@@ -40,6 +40,7 @@ fast_image_resize = "6"
 if-addrs = "0.15"
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }
 rust-embed = { version = "8", features = ["mime-guess"] }
+tauri-plugin-autostart = "2"
 
 # macOS only: PowerPoint for Mac's add-in panel refuses plain http://127.0.0.1,
 # so on Mac the control API is also served over HTTPS with a local

@@ -12,7 +12,17 @@
     <header class="top">
       <img src="./assets/logo.svg" alt="" width="24" height="24" />
       <span class="brand">SlideRelay</span>
-      <span id="live-pill" class="live-pill" hidden>Live</span>
+      <span class="top-actions">
+        <span id="live-pill" class="live-pill" hidden>Live</span>
+        <button
+          id="settings-btn"
+          class="icon-btn"
+          type="button"
+          aria-label="Settings"
+          title="Settings"
+          hidden
+        ></button>
+      </span>
     </header>
 
     <!-- Exactly one of these <section>s is visible at a time. -->
@@ -108,6 +118,87 @@
             <button id="stop-yes" class="sr-btn sr-btn--primary">Stop</button>
           </div>
         </div>
+      </section>
+
+      <section data-view="settings" hidden>
+        <h1>Settings</h1>
+        <form id="settings-form" class="settings" novalidate>
+          <label class="field">
+            <span class="field-label">Picture quality</span>
+            <select id="set-quality">
+              <option value="low">Low: for slow Wi-Fi</option>
+              <option value="balanced">Balanced (recommended)</option>
+              <option value="high">High: sharpest text</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Updates per second</span>
+            <select id="set-fps">
+              <option value="5">5: least data</option>
+              <option value="10">10</option>
+              <option value="15">15 (recommended)</option>
+              <option value="30">30: smoothest animations</option>
+            </select>
+          </label>
+
+          <div class="field">
+            <label class="check">
+              <input id="set-pin-on" type="checkbox" />
+              <span>Students need a PIN to watch</span>
+            </label>
+            <input
+              id="set-pin"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="8"
+              placeholder="4 to 8 digits"
+              aria-label="PIN"
+              hidden
+            />
+          </div>
+
+          <label class="field">
+            <span class="field-label">Network for the student link</span>
+            <select id="set-network"></select>
+            <span class="field-hint">Choose your classroom Wi-Fi if the link doesn't work.</span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Student port</span>
+            <input
+              id="set-port"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="5"
+              placeholder="Automatic"
+            />
+            <span id="port-hint" class="field-hint"></span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Toolbar position during the slideshow</span>
+            <select id="set-toolbar">
+              <option value="top-center">Top, centre</option>
+              <option value="bottom-center">Bottom, centre</option>
+              <option value="top-right">Top, right</option>
+              <option value="bottom-right">Bottom, right</option>
+            </select>
+          </label>
+
+          <label class="check">
+            <input id="set-login" type="checkbox" />
+            <span>Start SlideRelay when I log in</span>
+          </label>
+
+          <p id="settings-error" class="error" role="alert" hidden></p>
+          <div class="confirm-actions">
+            <button id="settings-cancel" class="sr-btn" type="button">Cancel</button>
+            <button id="settings-save" class="sr-btn sr-btn--primary" type="submit">Save</button>
+          </div>
+        </form>
       </section>
 
       <p id="error" class="error" role="alert" hidden></p>

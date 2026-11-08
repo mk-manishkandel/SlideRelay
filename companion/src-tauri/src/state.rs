@@ -8,6 +8,7 @@ use crate::config::Settings;
 use crate::pairing::Pairing;
 use crate::session::{BroadcastState, CommandError, Session, Status};
 use crate::stream::{EncodeSettings, Hub, ViewerMode};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex, RwLock};
 use tokio::sync::watch;
 
@@ -19,7 +20,13 @@ pub trait Ui: Send + Sync {
     fn show_qr(&self);
     /// The broadcast started or stopped (to show/hide the toolbar, etc.).
     fn broadcast_changed(&self, broadcasting: bool);
+    /// The teacher saved new settings (launch at login, toolbar position...).
+    fn settings_changed(&self, _settings: &Settings) {}
 }
+
+/// Why new settings were not saved, in plain words for the teacher.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SettingsError(pub String);
 
 /// A command from the add-in, toolbar, tray or keyboard shortcut.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -54,6 +61,12 @@ pub struct AppState {
     pub settings: RwLock<Settings>,
     /// "http://<lan-ip>:<port>" once the student server is running.
     pub base_url: RwLock<Option<String>>,
+    /// The port the student server is actually using.
+    pub student_port: RwLock<Option<u16>>,
+    /// Where settings are saved (None in tests).
+    settings_path: Mutex<Option<PathBuf>>,
+    /// The student port the teacher chose; the server restarts when it changes.
+    port_tx: watch::Sender<u16>,
     /// Shares frames and the viewer mode with all students.
     pub hub: Arc<Hub>,
     /// Scaling/quality used by the encoder (from Settings → Quality).
@@ -71,11 +84,15 @@ impl AppState {
         let session = Session::new();
         let (status_tx, _) = watch::channel(session.status(None));
         let encode = EncodeSettings::from(&settings.quality);
+        let (port_tx, _) = watch::channel(settings.port);
         Arc::new(Self {
             session: Mutex::new(session),
             pairing: Mutex::new(pairing),
             settings: RwLock::new(settings),
             base_url: RwLock::new(None),
+            student_port: RwLock::new(None),
+            settings_path: Mutex::new(None),
+            port_tx,
             hub: Arc::new(Hub::new()),
             encode_settings: Arc::new(Mutex::new(encode)),
             slideshow_bounds: Mutex::new(None),
@@ -87,6 +104,83 @@ impl AppState {
 
     pub fn ui(&self) -> &dyn Ui {
         self.ui.as_ref()
+    }
+
+    /// Save settings to this file from now on.
+    pub fn set_settings_path(&self, path: PathBuf) {
+        *self.settings_path.lock().unwrap_or_else(|e| e.into_inner()) = Some(path);
+    }
+
+    pub fn settings(&self) -> Settings {
+        self.settings
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
+    }
+
+    /// The port setting, watched by the student server.
+    pub fn watch_port(&self) -> watch::Receiver<u16> {
+        self.port_tx.subscribe()
+    }
+
+    /// Checks, saves and applies new settings. Most take effect straight
+    /// away (quality and speed on the next frame, the PIN for the next
+    /// student who joins); a new port restarts the student server, so it
+    /// can't change mid-broadcast.
+    pub fn save_settings(&self, new: Settings) -> Result<Settings, SettingsError> {
+        let mut new = new.validated().map_err(SettingsError)?;
+        let old = self.settings();
+        // Only the setup wizard changes this.
+        new.setup_done = old.setup_done;
+        if new.port != old.port && self.status().state != BroadcastState::Idle {
+            return Err(SettingsError(
+                "Stop the broadcast before changing the port.".into(),
+            ));
+        }
+        let path = self
+            .settings_path
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
+        if let Some(path) = path {
+            new.save(&path).map_err(|e| {
+                tracing::error!("could not save settings: {e}");
+                SettingsError("SlideRelay couldn't save your settings.".into())
+            })?;
+        }
+        *self.settings.write().unwrap_or_else(|e| e.into_inner()) = new.clone();
+        *self
+            .encode_settings
+            .lock()
+            .unwrap_or_else(|e| e.into_inner()) = EncodeSettings::from(&new.quality);
+        self.port_tx.send_if_modified(|port| {
+            let changed = *port != new.port;
+            *port = new.port;
+            changed
+        });
+        self.wake.notify();
+        self.ui.settings_changed(&new);
+        Ok(new)
+    }
+
+    /// Marks the first-run setup as finished (saved straight away).
+    pub fn mark_setup_done(&self) {
+        let mut s = self.settings();
+        if s.setup_done {
+            return;
+        }
+        s.setup_done = true;
+        let path = self
+            .settings_path
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
+        if let Some(path) = path {
+            if let Err(e) = s.save(&path) {
+                tracing::error!("could not save settings: {e}");
+            }
+        }
+        *self.settings.write().unwrap_or_else(|e| e.into_inner()) = s;
     }
 
     pub fn status(&self) -> Status {
@@ -148,10 +242,6 @@ impl AppState {
         let now_broadcasting = status.state != crate::session::BroadcastState::Idle;
         if was_broadcasting != now_broadcasting {
             self.ui.broadcast_changed(now_broadcasting);
-            if now_broadcasting {
-                // Show the QR code as soon as the broadcast starts.
-                self.ui.show_qr();
-            }
         }
         Ok(status)
     }
@@ -215,6 +305,34 @@ mod tests {
         s.run(Command::Start).unwrap();
         s.run(Command::Blank).unwrap();
         assert_eq!(s.hub.mode(), ViewerMode::Blank);
+    }
+
+    #[test]
+    fn settings_apply_and_port_is_locked_while_live() {
+        let s = state();
+        let mut new = s.settings();
+        new.pin = Some("1234".into());
+        new.quality = crate::config::Quality::High;
+        s.save_settings(new).unwrap();
+        assert_eq!(s.settings().pin.as_deref(), Some("1234"));
+        assert_eq!(
+            *s.encode_settings.lock().unwrap(),
+            EncodeSettings::from(&crate::config::Quality::High)
+        );
+
+        let port_rx = s.watch_port();
+        s.run(Command::Start).unwrap();
+        let mut moved = s.settings();
+        moved.port = 9123;
+        assert!(s.save_settings(moved.clone()).is_err());
+        s.run(Command::Stop).unwrap();
+        s.save_settings(moved).unwrap();
+        assert_eq!(*port_rx.borrow(), 9123);
+
+        let mut bad = s.settings();
+        bad.pin = Some("12".into());
+        assert!(s.save_settings(bad).is_err());
+        assert_eq!(s.settings().pin.as_deref(), Some("1234"));
     }
 
     #[test]

@@ -69,6 +69,29 @@ impl Settings {
         }
     }
 
+    /// Checks and tidies settings sent by the add-in. Returns a message in
+    /// plain words if something can't be used.
+    pub fn validated(mut self) -> Result<Self, String> {
+        self.pin = match self.pin.as_deref().map(str::trim) {
+            None | Some("") => None,
+            Some(pin)
+                if (4..=8).contains(&pin.len()) && pin.bytes().all(|b| b.is_ascii_digit()) =>
+            {
+                Some(pin.to_owned())
+            }
+            Some(_) => return Err("The PIN must be 4 to 8 digits.".into()),
+        };
+        self.lan_ip = match self.lan_ip.as_deref().map(str::trim) {
+            None | Some("") => None,
+            Some(ip) if ip.parse::<std::net::Ipv4Addr>().is_ok() => Some(ip.to_owned()),
+            Some(_) => return Err("That network address isn't valid.".into()),
+        };
+        if !(1..=30).contains(&self.max_fps) {
+            return Err("Updates per second must be between 1 and 30.".into());
+        }
+        Ok(self)
+    }
+
     pub fn save(&self, path: &Path) -> anyhow::Result<()> {
         if let Some(dir) = path.parent() {
             std::fs::create_dir_all(dir)?;
@@ -102,6 +125,41 @@ mod tests {
         std::fs::write(&path, "{ not json").unwrap();
         assert_eq!(Settings::load(&path), Settings::default());
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn validation_tidies_and_rejects() {
+        let ok = Settings {
+            pin: Some(" 2468 ".into()),
+            lan_ip: Some("".into()),
+            ..Settings::default()
+        }
+        .validated()
+        .unwrap();
+        assert_eq!(ok.pin.as_deref(), Some("2468"));
+        assert_eq!(ok.lan_ip, None);
+        let empty_pin = Settings {
+            pin: Some("  ".into()),
+            ..Settings::default()
+        };
+        assert_eq!(empty_pin.validated().unwrap().pin, None);
+        for bad in ["12", "123456789", "12a4"] {
+            let s = Settings {
+                pin: Some(bad.into()),
+                ..Settings::default()
+            };
+            assert!(s.validated().is_err(), "{bad}");
+        }
+        let bad_ip = Settings {
+            lan_ip: Some("10.0.0".into()),
+            ..Settings::default()
+        };
+        assert!(bad_ip.validated().is_err());
+        let bad_fps = Settings {
+            max_fps: 0,
+            ..Settings::default()
+        };
+        assert!(bad_fps.validated().is_err());
     }
 
     #[test]

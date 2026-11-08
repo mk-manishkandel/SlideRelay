@@ -68,6 +68,46 @@ export interface Status {
   problem: string | null;
 }
 
+export type Quality = 'low' | 'balanced' | 'high';
+export type ToolbarPosition = 'top-center' | 'bottom-center' | 'top-right' | 'bottom-right';
+
+/** The teacher's settings, saved by the app. */
+export interface TeacherSettings {
+  /** Port students connect to; 0 = automatic. */
+  port: number;
+  quality: Quality;
+  /** Maximum picture updates per second sent to students (1–30). */
+  maxFps: number;
+  /** Network address to put in the student link; null = automatic. */
+  lanIp: string | null;
+  /** PIN students must enter (4–8 digits), or null for none. */
+  pin: string | null;
+  toolbarPosition: ToolbarPosition;
+  launchAtLogin: boolean;
+  /** Read-only here: set by the app's setup wizard. */
+  setupDone: boolean;
+}
+
+/** A network adapter students might reach the app on. */
+export interface Adapter {
+  name: string;
+  ip: string;
+}
+
+/** GET /v1/settings, and the answer to POST /v1/settings. */
+export interface SettingsView {
+  settings: TeacherSettings;
+  adapters: Adapter[];
+  /** The port students are using right now. */
+  portInUse: number | null;
+}
+
+/** Error body for a refused POST /v1/settings (400). */
+export interface ApiErrorBody {
+  /** Why, in plain words for the teacher. */
+  error: string;
+}
+
 /** Commands: POST /v1/broadcast/{command} */
 export type Command = 'start' | 'stop' | 'pause' | 'resume' | 'blank' | 'unblank' | 'show-qr';
 

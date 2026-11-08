@@ -142,6 +142,20 @@ function wire(): void {
     }
   });
 
+  // PowerPoint's panel can't launch apps itself, so open a tiny page in the
+  // teacher's browser that hands off to the app's sliderelay:// link. The
+  // panel keeps retrying and connects as soon as the app is up.
+  $('open-app-btn').addEventListener('click', () => {
+    const url = new URL('./open.html', location.href).href;
+    try {
+      if (Office.context?.ui?.openBrowserWindow) Office.context.ui.openBrowserWindow(url);
+      else window.open(url, '_blank');
+    } catch {
+      window.open(url, '_blank');
+    }
+    scheduleRetry();
+  });
+
   $('start-btn').addEventListener('click', () => run('start'));
   for (const id of ['pause-btn', 'blank-btn']) {
     $(id).addEventListener('click', (e) => {

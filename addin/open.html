@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Open SlideRelay</title>
+    <script type="module" src="./src/open.ts"></script>
+  </head>
+  <body>
+    <!--
+      Opened in the teacher's web browser by the panel's "Open SlideRelay"
+      button: PowerPoint's panel can't launch apps, but browsers can, via the
+      sliderelay:// link the app registers when it's installed.
+    -->
+    <main class="open-page">
+      <img src="./assets/logo.svg" alt="" width="64" height="64" />
+      <h1>Opening SlideRelay…</h1>
+      <p class="sr-muted">If your browser asks, choose <strong>Open SlideRelay</strong>.</p>
+      <a id="open-link" class="sr-btn sr-btn--primary sr-btn--big" href="sliderelay://open"
+        >Open SlideRelay</a
+      >
+      <p class="sr-muted small">
+        Nothing happened?
+        <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest"
+          >Download SlideRelay</a
+        >
+        and install it, then try again. You can close this tab afterwards.
+      </p>
+    </main>
+  </body>
+</html>

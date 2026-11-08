@@ -28,7 +28,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    rollupOptions: { input: { taskpane: resolve(import.meta.dirname, 'taskpane.html') } },
+    rollupOptions: {
+      input: {
+        taskpane: resolve(import.meta.dirname, 'taskpane.html'),
+        open: resolve(import.meta.dirname, 'open.html'),
+      },
+    },
   },
   plugins: [
     {

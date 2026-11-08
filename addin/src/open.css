@@ -1,0 +1,33 @@
+.open-page {
+  max-width: 420px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.open-page h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.open-page p {
+  margin: 0;
+}
+
+.open-page a:not(.sr-btn) {
+  color: var(--sr-accent);
+}
+
+.open-page a.sr-btn {
+  text-decoration: none;
+}
+
+.small {
+  font-size: 13px;
+}

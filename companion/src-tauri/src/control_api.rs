@@ -71,6 +71,7 @@ pub fn router(state: Arc<AppState>, ports: &[u16]) -> Router {
         .route("/v1/broadcast/{command}", post(command))
         .route("/v1/events", get(events))
         .route("/v1/settings", get(get_settings).post(save_settings))
+        .route("/v1/fix/screen-permission", post(fix_screen_permission))
         .layer(middleware::from_fn_with_state(ctx.clone(), guard))
         .layer(cors)
         .with_state(ctx)
@@ -272,6 +273,16 @@ async fn save_settings(
         Ok(_) => Json(settings_view(&ctx.state)).into_response(),
         Err(e) => error(&e.0),
     }
+}
+
+/// Opens the Screen Recording page in System Settings (macOS), so the
+/// teacher can fix the permission from the panel.
+async fn fix_screen_permission(State(ctx): State<Ctx>, headers: HeaderMap) -> Response {
+    if !authorized(&ctx, &headers) {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+    crate::capture::open_permission_settings();
+    StatusCode::NO_CONTENT.into_response()
 }
 
 /// Live status feed. Browsers can't add headers to WebSockets, so the first

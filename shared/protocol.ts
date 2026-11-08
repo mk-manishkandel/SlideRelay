@@ -66,6 +66,8 @@ export interface Status {
   url: string | null;
   /** Problem the teacher should know about, in plain words (or null). */
   problem: string | null;
+  /** A fix the panel can offer for the problem: POST /v1/fix/{fix}. */
+  fix?: 'screen-permission' | null;
 }
 
 export type Quality = 'low' | 'balanced' | 'high';

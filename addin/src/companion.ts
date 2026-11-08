@@ -161,6 +161,15 @@ export function sendCommand(command: Command): Promise<Status> {
   return request<Status>(`/v1/broadcast/${command}`, { method: 'POST' });
 }
 
+/** Asks the app to open the right system page to fix a problem. */
+export async function requestFix(fix: string): Promise<void> {
+  const response = await fetch(`${workingBase ?? CONTROL_BASES[0]}/v1/fix/${fix}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${loadToken() ?? ''}` },
+  });
+  if (!response.ok) throw new ApiError(response.status, null);
+}
+
 export function getSettings(): Promise<SettingsView> {
   return request<SettingsView>('/v1/settings');
 }

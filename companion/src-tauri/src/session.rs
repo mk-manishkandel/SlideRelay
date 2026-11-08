@@ -33,6 +33,8 @@ pub struct Status {
     pub viewers: usize,
     pub url: Option<String>,
     pub problem: Option<String>,
+    /// A fix the panel can offer for the problem ("screen-permission").
+    pub fix: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -145,6 +147,8 @@ impl Session {
             viewers: if self.code.is_some() { self.viewers } else { 0 },
             url,
             problem: self.problem.clone(),
+            fix: (self.problem.as_deref() == Some(crate::broadcaster::PROBLEM_PERMISSION))
+                .then(|| "screen-permission".to_owned()),
         }
     }
 

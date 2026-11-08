@@ -39,7 +39,7 @@ impl Wake {
 
 /// Problems shown to the teacher, in plain words.
 pub const PROBLEM_PERMISSION: &str =
-    "SlideRelay needs Screen Recording permission. Open SlideRelay and click Fix this.";
+    "SlideRelay needs Screen Recording permission. Click Fix this and switch SlideRelay on.";
 pub const PROBLEM_PRESENTER_ONLY: &str =
     "Presenter View is on with only one screen, so students can't see your slides. Turn off Presenter View in the Slide Show tab.";
 pub const PROBLEM_CAPTURE_FAILED: &str =

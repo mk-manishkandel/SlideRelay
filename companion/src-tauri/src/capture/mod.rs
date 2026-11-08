@@ -177,6 +177,18 @@ pub fn request_permission() {
     macos::request_permission();
 }
 
+/// Asks for Screen Recording permission and opens the matching System
+/// Settings page (macOS; nothing to do on Windows).
+pub fn open_permission_settings() {
+    request_permission();
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("/usr/bin/open")
+            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+            .spawn();
+    }
+}
+
 #[derive(Debug)]
 pub enum CaptureError {
     /// macOS Screen Recording permission is missing.

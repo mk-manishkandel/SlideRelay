@@ -198,13 +198,7 @@ fn screen_permission_needed() -> bool {
 /// Opens the right System Settings page (macOS) for Screen Recording.
 #[tauri::command]
 fn open_screen_permission_settings() {
-    capture::request_permission();
-    #[cfg(target_os = "macos")]
-    {
-        let _ = std::process::Command::new("/usr/bin/open")
-            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
-            .spawn();
-    }
+    capture::open_permission_settings();
 }
 
 #[tauri::command]
@@ -425,19 +419,16 @@ fn on_broadcast_state(app: &AppHandle, from: session::BroadcastState, to: sessio
     }
 }
 
-/// True if a one-time setup step is still needed (shown in the main window).
+/// True if the main window must open at startup: only when PowerPoint for
+/// Mac can't reach SlideRelay yet (the one-time "Let PowerPoint connect").
+/// Everything else, like Screen Recording permission, is shown and fixed
+/// from the PowerPoint panel, so SlideRelay otherwise starts silently.
 fn needs_attention(app: &AppHandle) -> bool {
     #[cfg(target_os = "macos")]
     {
-        if !capture::has_permission() {
-            return true;
-        }
-        if let Some(cert) = app.try_state::<local_tls::LocalCert>() {
-            if !cert.is_trusted() {
-                return true;
-            }
-        }
-        false
+        app.try_state::<local_tls::LocalCert>()
+            .map(|cert| !cert.is_trusted())
+            .unwrap_or(false)
     }
     #[cfg(not(target_os = "macos"))]
     {

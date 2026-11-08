@@ -23,6 +23,7 @@ import {
   getSettings,
   getStatus,
   pair,
+  requestFix,
   saveSettings,
   sendCommand,
   subscribe,
@@ -96,6 +97,9 @@ function render(status: Status): void {
   const problem = $('problem');
   problem.textContent = status.problem ?? '';
   problem.hidden = !status.problem;
+  const fix = $('fix-btn');
+  fix.hidden = !status.fix;
+  if (status.fix) fix.dataset.fix = status.fix;
 
   $('pause-btn').textContent = status.paused ? 'Resume' : 'Pause';
   $('pause-btn').dataset.command = status.paused ? 'resume' : 'pause';
@@ -372,6 +376,18 @@ function wire(): void {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && settingsOpen) closeSettings();
+  });
+
+  $('fix-btn').addEventListener('click', async () => {
+    const fix = $('fix-btn').dataset.fix;
+    if (!fix) return;
+    try {
+      await requestFix(fix);
+    } catch {
+      showError(
+        "Couldn't open System Settings. Open it and choose Privacy & Security → Screen Recording.",
+      );
+    }
   });
 
   $('start-btn').addEventListener('click', () => run('start'));

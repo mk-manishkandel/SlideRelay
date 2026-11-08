@@ -6,7 +6,8 @@
 
 use crate::config::Settings;
 use crate::pairing::Pairing;
-use crate::session::{CommandError, Session, Status};
+use crate::session::{BroadcastState, CommandError, Session, Status};
+use crate::stream::{EncodeSettings, Hub, ViewerMode};
 use std::sync::{Arc, Mutex, RwLock};
 use tokio::sync::watch;
 
@@ -53,6 +54,14 @@ pub struct AppState {
     pub settings: RwLock<Settings>,
     /// "http://<lan-ip>:<port>" once the student server is running.
     pub base_url: RwLock<Option<String>>,
+    /// Shares frames and the viewer mode with all students.
+    pub hub: Arc<Hub>,
+    /// Scaling/quality used by the encoder (from Settings → Quality).
+    pub encode_settings: Arc<Mutex<EncodeSettings>>,
+    /// Where the slideshow window is (screen points), for "Show QR on projector".
+    pub slideshow_bounds: Mutex<Option<(f64, f64, f64, f64)>>,
+    /// Wakes the broadcaster thread right away after a command.
+    pub wake: crate::broadcaster::Wake,
     status_tx: watch::Sender<Status>,
     ui: Arc<dyn Ui>,
 }
@@ -61,11 +70,16 @@ impl AppState {
     pub fn new(settings: Settings, pairing: Pairing, ui: Arc<dyn Ui>) -> Arc<Self> {
         let session = Session::new();
         let (status_tx, _) = watch::channel(session.status(None));
+        let encode = EncodeSettings::from(&settings.quality);
         Arc::new(Self {
             session: Mutex::new(session),
             pairing: Mutex::new(pairing),
             settings: RwLock::new(settings),
             base_url: RwLock::new(None),
+            hub: Arc::new(Hub::new()),
+            encode_settings: Arc::new(Mutex::new(encode)),
+            slideshow_bounds: Mutex::new(None),
+            wake: crate::broadcaster::Wake::default(),
             status_tx,
             ui,
         })
@@ -86,12 +100,16 @@ impl AppState {
 
     /// Changes the session and notifies everyone if the status changed.
     pub fn update<R>(&self, f: impl FnOnce(&mut Session) -> R) -> R {
-        let (result, status) = {
+        let (result, status, mode) = {
             let mut session = self.session.lock().unwrap_or_else(|e| e.into_inner());
             let result = f(&mut session);
             let base = self.base_url.read().unwrap_or_else(|e| e.into_inner());
-            (result, session.status(base.as_deref()))
+            let status = session.status(base.as_deref());
+            let mode = viewer_mode(&status);
+            (result, status, mode)
         };
+        // Students' screens follow the session (Live/Paused/Blank/Ended).
+        self.hub.set_mode(mode);
         self.status_tx.send_if_modified(|current| {
             if *current != status {
                 *current = status;
@@ -125,6 +143,7 @@ impl AppState {
                 self.ui.show_qr();
             }
         }
+        self.wake.notify();
         let status = self.status();
         let now_broadcasting = status.state != crate::session::BroadcastState::Idle;
         if was_broadcasting != now_broadcasting {
@@ -146,4 +165,53 @@ impl Ui for NoUi {
     fn show_pairing_prompt(&self, _request_id: &str) {}
     fn show_qr(&self) {}
     fn broadcast_changed(&self, _broadcasting: bool) {}
+}
+
+/// What students should see for a given teacher status.
+pub fn viewer_mode(status: &Status) -> ViewerMode {
+    match status.state {
+        BroadcastState::Idle => ViewerMode::Ended,
+        _ if status.blanked => ViewerMode::Blank,
+        BroadcastState::Waiting => ViewerMode::Waiting,
+        BroadcastState::Live if status.paused => ViewerMode::Paused,
+        BroadcastState::Live => ViewerMode::Live,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::Settings;
+    use crate::pairing::Pairing;
+
+    fn state() -> Arc<AppState> {
+        AppState::new(Settings::default(), Pairing::load(None), Arc::new(NoUi))
+    }
+
+    #[test]
+    fn students_follow_the_teacher() {
+        let s = state();
+        assert_eq!(s.hub.mode(), ViewerMode::Ended);
+        s.run(Command::Start).unwrap();
+        assert_eq!(s.hub.mode(), ViewerMode::Waiting);
+        s.update(|x| x.set_slideshow_found(true));
+        assert_eq!(s.hub.mode(), ViewerMode::Live);
+        s.run(Command::Pause).unwrap();
+        assert_eq!(s.hub.mode(), ViewerMode::Paused);
+        s.run(Command::Blank).unwrap();
+        assert_eq!(s.hub.mode(), ViewerMode::Blank);
+        s.run(Command::Unblank).unwrap();
+        s.run(Command::Resume).unwrap();
+        assert_eq!(s.hub.mode(), ViewerMode::Live);
+        s.run(Command::Stop).unwrap();
+        assert_eq!(s.hub.mode(), ViewerMode::Ended);
+    }
+
+    #[test]
+    fn blank_works_before_the_slideshow_starts() {
+        let s = state();
+        s.run(Command::Start).unwrap();
+        s.run(Command::Blank).unwrap();
+        assert_eq!(s.hub.mode(), ViewerMode::Blank);
+    }
 }

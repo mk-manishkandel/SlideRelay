@@ -13,6 +13,23 @@ About 5 minutes. You need Windows 10 or 11 (64-bit) and the PowerPoint desktop a
 The `.msi` file is for IT departments who deploy software to many PCs. Most people want the
 `setup.exe`.
 
+### "This file isn't commonly downloaded" / "could harm your device"
+
+Your browser may warn you while downloading. **This is not a virus warning.** It appears because
+SlideRelay is new, free and not yet signed with a paid certificate, so few people have downloaded
+this exact file yet (see [SIGNING.md](SIGNING.md)). To keep the file:
+
+- **Microsoft Edge:** in the downloads panel, hover over the file → **⋯** → **Keep** →
+  **Show more** → **Keep anyway**.
+- **Google Chrome:** click **Keep** (or **⋮** → **Download dangerous file**).
+
+Want to be sure? [Check your download](#check-your-download-optional): if the checksum matches,
+it's exactly the file GitHub built from the public source code.
+
+If **Microsoft Defender** ever reports a threat in SlideRelay, that's a false positive: please
+[tell us](https://github.com/mk-manishkandel/SlideRelay/issues/new/choose) and report it to
+Microsoft at https://www.microsoft.com/wdsi/filesubmission (choose **Incorrect detection**).
+
 ## 2. Install
 
 1. Double-click the downloaded `SlideRelay_x.y.z_x64-setup.exe`.

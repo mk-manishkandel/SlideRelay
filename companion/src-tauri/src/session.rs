@@ -45,7 +45,7 @@ pub enum CommandError {
 
 #[derive(Debug, Default)]
 pub struct Session {
-    /// The random code in the student link, e.g. "K7PQ". `None` when idle.
+    /// The random code in the viewer link, e.g. "K7PQ". `None` when idle.
     code: Option<String>,
     slideshow_found: bool,
     paused: bool,
@@ -67,7 +67,7 @@ impl Session {
         self.code.as_deref()
     }
 
-    /// Checks a code from a student's URL. Comparison ignores case so a
+    /// Checks a code from a viewer's URL. Comparison ignores case so a
     /// typed "k7pq" still works.
     pub fn code_matches(&self, candidate: &str) -> bool {
         match &self.code {
@@ -123,7 +123,7 @@ impl Session {
         self.viewers = viewers;
     }
 
-    /// A plain-words problem for the teacher (e.g. missing permission).
+    /// A plain-words problem for the presenter (e.g. missing permission).
     pub fn set_problem(&mut self, problem: Option<String>) {
         self.problem = problem;
     }

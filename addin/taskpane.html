@@ -88,19 +88,19 @@
 
       <section data-view="idle" hidden>
         <button id="start-btn" class="sr-btn sr-btn--primary sr-btn--big">Start Broadcast</button>
-        <p class="sr-muted center">Students will scan a QR code to watch on their phones.</p>
+        <p class="sr-muted center">Viewers will scan a QR code to watch on their phones.</p>
       </section>
 
       <section data-view="broadcasting" hidden>
         <div class="sr-card status-card">
           <p id="status-line" class="status-line"></p>
-          <p id="viewers" class="viewers">0 students connected</p>
+          <p id="viewers" class="viewers">0 viewers connected</p>
           <p id="problem" class="problem" hidden></p>
           <button id="fix-btn" class="sr-btn sr-btn--primary" type="button" hidden>Fix this</button>
         </div>
         <div id="share" class="sr-card share" hidden>
           <div id="share-qr" class="share-qr"></div>
-          <p class="small sr-muted">Students scan this, or open:</p>
+          <p class="small sr-muted">Viewers scan this, or open:</p>
           <p id="share-link" class="share-link"></p>
           <div class="share-actions">
             <button id="copy-btn" class="sr-btn">Copy link</button>
@@ -113,7 +113,7 @@
         </div>
         <button id="stop-btn" class="sr-btn sr-btn--big stop">Stop Broadcast</button>
         <div id="stop-confirm" class="sr-card confirm" hidden>
-          <p>Stop the broadcast? Students will be disconnected.</p>
+          <p>Stop the broadcast? Viewers will be disconnected.</p>
           <div class="confirm-actions">
             <button id="stop-cancel" class="sr-btn">Keep going</button>
             <button id="stop-yes" class="sr-btn sr-btn--primary">Stop</button>
@@ -146,7 +146,7 @@
           <div class="field">
             <label class="check">
               <input id="set-pin-on" type="checkbox" />
-              <span>Students need a PIN to watch</span>
+              <span>Viewers need a PIN to watch</span>
             </label>
             <input
               id="set-pin"
@@ -161,13 +161,13 @@
           </div>
 
           <label class="field">
-            <span class="field-label">Network for the student link</span>
+            <span class="field-label">Network for the viewer link</span>
             <select id="set-network"></select>
             <span class="field-hint">Choose your classroom Wi-Fi if the link doesn't work.</span>
           </label>
 
           <label class="field">
-            <span class="field-label">Student port</span>
+            <span class="field-label">Viewer port</span>
             <input
               id="set-port"
               type="text"

@@ -1,4 +1,4 @@
-//! Frames: from the capture backend to every student's browser.
+//! Frames: from the capture backend to every viewer's browser.
 //!
 //! ```text
 //! capture (OS thread) ──RawFrame──▶ encoder thread ──JPEG──▶ Hub ──▶ each viewer
@@ -35,7 +35,7 @@ pub struct EncodedFrame {
     pub jpeg: Bytes,
 }
 
-/// What students should see right now. Sent to viewers as JSON.
+/// What viewers should see right now. Sent to viewers as JSON.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ViewerMode {
@@ -77,8 +77,8 @@ impl Hub {
         *self.mode_tx.borrow()
     }
 
-    /// Changes what students see. Resuming re-sends the newest frame so
-    /// students catch up with anything that changed while paused.
+    /// Changes what viewers see. Resuming re-sends the newest frame so
+    /// viewers catch up with anything that changed while paused.
     pub fn set_mode(&self, mode: ViewerMode) {
         let old = self.mode();
         if old == mode {
@@ -127,7 +127,7 @@ impl Hub {
 
 // ---------- Encoder ----------
 
-/// Encoder settings derived from the teacher's Quality choice.
+/// Encoder settings derived from the presenter's Quality choice.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EncodeSettings {
     pub max_width: u32,

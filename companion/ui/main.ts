@@ -23,13 +23,13 @@ function render(status: Status): void {
           ? 'Paused'
           : 'Live';
   $('viewers').textContent =
-    status.viewers === 1 ? '1 student connected' : `${status.viewers} students connected`;
+    status.viewers === 1 ? '1 viewer connected' : `${status.viewers} viewers connected`;
   $('link').textContent = status.url ? status.url.replace(/^https?:\/\//, '') : '';
   $('qr-btn').hidden = !status.url;
 
   $('problem-card').hidden = !status.problem;
   $('problem-text').textContent = status.problem ?? '';
-  // The one problem the app can fix for the teacher: macOS Screen Recording.
+  // The one problem the app can fix for the presenter: macOS Screen Recording.
   $('fix-btn').hidden = !status.problem?.includes('Screen Recording');
 }
 

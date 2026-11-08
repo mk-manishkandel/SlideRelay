@@ -3,7 +3,7 @@
 //! Listens ONLY on 127.0.0.1 (never the network). Defence layers:
 //! 1. Host header must be 127.0.0.1/localhost (blocks DNS-rebinding attacks).
 //! 2. Browser requests must come from the add-in's own origin (CORS).
-//! 3. Everything except `/v1/hello` and pairing needs a token the teacher
+//! 3. Everything except `/v1/hello` and pairing needs a token the presenter
 //!    approved in the app ("pairing").
 //!
 //! The JSON shapes mirror `shared/protocol.ts`. See that file for the
@@ -224,9 +224,9 @@ struct AdapterInfo {
 #[serde(rename_all = "camelCase")]
 struct SettingsView {
     settings: Settings,
-    /// Network adapters students could reach (for "Network").
+    /// Network adapters viewers could reach (for "Network").
     adapters: Vec<AdapterInfo>,
-    /// The port students are using right now.
+    /// The port viewers are using right now.
     port_in_use: Option<u16>,
 }
 
@@ -240,7 +240,7 @@ fn settings_view(state: &AppState) -> SettingsView {
                 ip: a.ip.to_string(),
             })
             .collect(),
-        port_in_use: *state.student_port.read().unwrap_or_else(|e| e.into_inner()),
+        port_in_use: *state.viewer_port.read().unwrap_or_else(|e| e.into_inner()),
     }
 }
 
@@ -276,7 +276,7 @@ async fn save_settings(
 }
 
 /// Opens the Screen Recording page in System Settings (macOS), so the
-/// teacher can fix the permission from the panel.
+/// presenter can fix the permission from the panel.
 async fn fix_screen_permission(State(ctx): State<Ctx>, headers: HeaderMap) -> Response {
     if !authorized(&ctx, &headers) {
         return StatusCode::UNAUTHORIZED.into_response();

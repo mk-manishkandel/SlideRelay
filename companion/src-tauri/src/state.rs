@@ -1,5 +1,5 @@
 //! The app's shared state, used by the control API, the Tauri windows and
-//! (later) the capture and student servers.
+//! (later) the capture and viewer servers.
 //!
 //! It doesn't depend on Tauri: anything UI-related goes through the `Ui`
 //! trait, so tests can swap in a fake UI.
@@ -14,17 +14,17 @@ use tokio::sync::watch;
 
 /// The things the core logic needs the UI to do.
 pub trait Ui: Send + Sync {
-    /// Ask the teacher "Allow PowerPoint to control SlideRelay?".
+    /// Ask the presenter "Allow PowerPoint to control SlideRelay?".
     fn show_pairing_prompt(&self, request_id: &str);
     /// Show (or bring to front) the QR code window.
     fn show_qr(&self);
     /// The broadcast started or stopped (to show/hide the toolbar, etc.).
     fn broadcast_changed(&self, broadcasting: bool);
-    /// The teacher saved new settings (launch at login, toolbar position...).
+    /// The presenter saved new settings (launch at login, toolbar position...).
     fn settings_changed(&self, _settings: &Settings) {}
 }
 
-/// Why new settings were not saved, in plain words for the teacher.
+/// Why new settings were not saved, in plain words for the presenter.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SettingsError(pub String);
 
@@ -59,15 +59,15 @@ pub struct AppState {
     pub session: Mutex<Session>,
     pub pairing: Mutex<Pairing>,
     pub settings: RwLock<Settings>,
-    /// "http://<lan-ip>:<port>" once the student server is running.
+    /// "http://<lan-ip>:<port>" once the viewer server is running.
     pub base_url: RwLock<Option<String>>,
-    /// The port the student server is actually using.
-    pub student_port: RwLock<Option<u16>>,
+    /// The port the viewer server is actually using.
+    pub viewer_port: RwLock<Option<u16>>,
     /// Where settings are saved (None in tests).
     settings_path: Mutex<Option<PathBuf>>,
-    /// The student port the teacher chose; the server restarts when it changes.
+    /// The viewer port the presenter chose; the server restarts when it changes.
     port_tx: watch::Sender<u16>,
-    /// Shares frames and the viewer mode with all students.
+    /// Shares frames and the viewer mode with all viewers.
     pub hub: Arc<Hub>,
     /// Scaling/quality used by the encoder (from Settings → Quality).
     pub encode_settings: Arc<Mutex<EncodeSettings>>,
@@ -90,7 +90,7 @@ impl AppState {
             pairing: Mutex::new(pairing),
             settings: RwLock::new(settings),
             base_url: RwLock::new(None),
-            student_port: RwLock::new(None),
+            viewer_port: RwLock::new(None),
             settings_path: Mutex::new(None),
             port_tx,
             hub: Arc::new(Hub::new()),
@@ -118,14 +118,14 @@ impl AppState {
             .clone()
     }
 
-    /// The port setting, watched by the student server.
+    /// The port setting, watched by the viewer server.
     pub fn watch_port(&self) -> watch::Receiver<u16> {
         self.port_tx.subscribe()
     }
 
     /// Checks, saves and applies new settings. Most take effect straight
     /// away (quality and speed on the next frame, the PIN for the next
-    /// student who joins); a new port restarts the student server, so it
+    /// viewer who joins); a new port restarts the viewer server, so it
     /// can't change mid-broadcast.
     pub fn save_settings(&self, new: Settings) -> Result<Settings, SettingsError> {
         let mut new = new.validated().map_err(SettingsError)?;
@@ -202,7 +202,7 @@ impl AppState {
             let mode = viewer_mode(&status);
             (result, status, mode)
         };
-        // Students' screens follow the session (Live/Paused/Blank/Ended).
+        // Viewers' screens follow the session (Live/Paused/Blank/Ended).
         self.hub.set_mode(mode);
         self.status_tx.send_if_modified(|current| {
             if *current != status {
@@ -215,7 +215,7 @@ impl AppState {
         result
     }
 
-    /// Runs a teacher command and returns the new status.
+    /// Runs a presenter command and returns the new status.
     pub fn run(&self, command: Command) -> Result<Status, CommandError> {
         let was_broadcasting = self.status().state != crate::session::BroadcastState::Idle;
         match command {
@@ -257,12 +257,12 @@ impl Ui for NoUi {
     fn broadcast_changed(&self, _broadcasting: bool) {}
 }
 
-/// What students should see for a given teacher status.
+/// What viewers should see for a given presenter status.
 pub fn viewer_mode(status: &Status) -> ViewerMode {
     match status.state {
         BroadcastState::Idle => ViewerMode::Ended,
         _ if status.blanked => ViewerMode::Blank,
-        // Paused means "freeze on the last slide", even if the teacher then
+        // Paused means "freeze on the last slide", even if the presenter then
         // leaves the slideshow to edit something.
         _ if status.paused => ViewerMode::Paused,
         BroadcastState::Waiting => ViewerMode::Waiting,
@@ -281,7 +281,7 @@ mod tests {
     }
 
     #[test]
-    fn students_follow_the_teacher() {
+    fn viewers_follow_the_presenter() {
         let s = state();
         assert_eq!(s.hub.mode(), ViewerMode::Ended);
         s.run(Command::Start).unwrap();
@@ -342,7 +342,7 @@ mod tests {
         s.update(|x| x.set_slideshow_found(true));
         s.hub.push(vec![7]);
         s.run(Command::Pause).unwrap();
-        // Teacher leaves the slideshow to use PowerPoint.
+        // Presenter leaves the slideshow to use PowerPoint.
         s.update(|x| x.set_slideshow_found(false));
         assert_eq!(s.hub.mode(), ViewerMode::Paused);
         let (frames, _) = s.hub.subscribe();

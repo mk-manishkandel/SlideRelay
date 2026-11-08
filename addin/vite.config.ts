@@ -59,7 +59,7 @@ export default defineConfig({
       },
     },
     {
-      // Publish the manifests next to the add-in so teachers can download them.
+      // Publish the manifests next to the add-in so presenters can download them.
       name: 'copy-manifests',
       closeBundle() {
         copyFileSync(

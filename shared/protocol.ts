@@ -36,7 +36,7 @@ export interface Hello {
   minClientApi: number;
 }
 
-/** POST /v1/pair → starts a pairing request the teacher must approve. */
+/** POST /v1/pair → starts a pairing request the presenter must approve. */
 export interface PairStart {
   requestId: string;
 }
@@ -62,9 +62,9 @@ export interface Status {
   paused: boolean;
   blanked: boolean;
   viewers: number;
-  /** The link students open, e.g. "http://192.168.1.20:8080/K7PQ". */
+  /** The link viewers open, e.g. "http://192.168.1.20:8080/K7PQ". */
   url: string | null;
-  /** Problem the teacher should know about, in plain words (or null). */
+  /** Problem the presenter should know about, in plain words (or null). */
   problem: string | null;
   /** A fix the panel can offer for the problem: POST /v1/fix/{fix}. */
   fix?: 'screen-permission' | null;
@@ -73,16 +73,16 @@ export interface Status {
 export type Quality = 'low' | 'balanced' | 'high';
 export type ToolbarPosition = 'top-center' | 'bottom-center' | 'top-right' | 'bottom-right';
 
-/** The teacher's settings, saved by the app. */
-export interface TeacherSettings {
-  /** Port students connect to; 0 = automatic. */
+/** The presenter's settings, saved by the app. */
+export interface PresenterSettings {
+  /** Port viewers connect to; 0 = automatic. */
   port: number;
   quality: Quality;
-  /** Maximum picture updates per second sent to students (1–30). */
+  /** Maximum picture updates per second sent to viewers (1–30). */
   maxFps: number;
-  /** Network address to put in the student link; null = automatic. */
+  /** Network address to put in the viewer link; null = automatic. */
   lanIp: string | null;
-  /** PIN students must enter (4–8 digits), or null for none. */
+  /** PIN viewers must enter (4–8 digits), or null for none. */
   pin: string | null;
   toolbarPosition: ToolbarPosition;
   launchAtLogin: boolean;
@@ -90,7 +90,7 @@ export interface TeacherSettings {
   setupDone: boolean;
 }
 
-/** A network adapter students might reach the app on. */
+/** A network adapter viewers might reach the app on. */
 export interface Adapter {
   name: string;
   ip: string;
@@ -98,15 +98,15 @@ export interface Adapter {
 
 /** GET /v1/settings, and the answer to POST /v1/settings. */
 export interface SettingsView {
-  settings: TeacherSettings;
+  settings: PresenterSettings;
   adapters: Adapter[];
-  /** The port students are using right now. */
+  /** The port viewers are using right now. */
   portInUse: number | null;
 }
 
 /** Error body for a refused POST /v1/settings (400). */
 export interface ApiErrorBody {
-  /** Why, in plain words for the teacher. */
+  /** Why, in plain words for the presenter. */
   error: string;
 }
 

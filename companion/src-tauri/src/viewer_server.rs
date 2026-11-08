@@ -1,4 +1,4 @@
-//! The web server students connect to on the local network.
+//! The web server viewers connect to on the local network.
 //!
 //! ```text
 //! GET /<code>       the viewer page (also any other path: the page itself
@@ -73,7 +73,7 @@ pub async fn bind(preferred: u16) -> std::io::Result<tokio::net::TcpListener> {
 }
 
 pub async fn serve(listener: tokio::net::TcpListener, state: Arc<AppState>) -> anyhow::Result<()> {
-    tracing::info!("student server listening on {}", listener.local_addr()?);
+    tracing::info!("viewer server listening on {}", listener.local_addr()?);
     axum::serve(listener, router(state)).await?;
     Ok(())
 }
@@ -182,7 +182,7 @@ async fn send(socket: &mut WebSocket, msg: Message) -> bool {
     )
 }
 
-/// Asks for the PIN if the teacher set one. Returns false to disconnect.
+/// Asks for the PIN if the presenter set one. Returns false to disconnect.
 async fn check_pin(ctx: &Ctx, socket: &mut WebSocket) -> bool {
     let pin = ctx
         .state

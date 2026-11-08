@@ -59,9 +59,9 @@ pub fn slideshow_screen(screens: &[(Rect, f64)], bounds: Option<Rect>) -> Option
     })
 }
 
-/// The teacher's own screen: with two or more screens, one that is NOT
+/// The presenter's own screen: with two or more screens, one that is NOT
 /// showing the slideshow (that one is the projector); otherwise the main one.
-pub fn teacher_screen(screen_count: usize, slideshow: Option<usize>, primary: usize) -> usize {
+pub fn presenter_screen(screen_count: usize, slideshow: Option<usize>, primary: usize) -> usize {
     match slideshow {
         Some(projector) if screen_count > 1 => {
             if primary != projector {
@@ -156,7 +156,7 @@ fn float_above_slideshow(window: &WebviewWindow) {
 fn float_above_slideshow(_window: &WebviewWindow) {}
 
 /// Gives the keyboard back to PowerPoint after a toolbar click, so the
-/// teacher's next arrow key still changes the slide.
+/// presenter's next arrow key still changes the slide.
 pub fn refocus_powerpoint(app: &AppHandle) {
     #[cfg(target_os = "macos")]
     {
@@ -207,7 +207,7 @@ fn toolbar_window(app: &AppHandle) -> Option<WebviewWindow> {
     }
 }
 
-/// Shows the toolbar on the teacher's screen, at their chosen position.
+/// Shows the toolbar on the presenter's screen, at their chosen position.
 pub fn show_toolbar(app: &AppHandle) {
     let Some(window) = toolbar_window(app) else {
         return;
@@ -217,7 +217,7 @@ pub fn show_toolbar(app: &AppHandle) {
 }
 
 /// Moves the toolbar if the slideshow moved to another screen or the
-/// teacher changed the position setting.
+/// presenter changed the position setting.
 pub fn reposition_toolbar(app: &AppHandle) {
     if let Some(window) = app.get_webview_window(TOOLBAR) {
         if window.is_visible().unwrap_or(false) {
@@ -228,7 +228,7 @@ pub fn reposition_toolbar(app: &AppHandle) {
 
 fn place_toolbar(app: &AppHandle, window: &WebviewWindow) {
     let Some(s) = screens(app) else { return };
-    let i = teacher_screen(s.monitors.len(), s.slideshow, s.primary);
+    let i = presenter_screen(s.monitors.len(), s.slideshow, s.primary);
     let m = &s.monitors[i];
     let position = app.state::<Arc<AppState>>().settings().toolbar_position;
     let (x, y) = toolbar_origin(work_rect(m), m.scale_factor(), &position);
@@ -397,12 +397,12 @@ mod tests {
     #[test]
     fn toolbar_avoids_the_projector() {
         // Laptop is primary (0); slideshow on the projector (1).
-        assert_eq!(teacher_screen(2, Some(1), 0), 0);
+        assert_eq!(presenter_screen(2, Some(1), 0), 0);
         // Slideshow on the primary screen: use the other one.
-        assert_eq!(teacher_screen(2, Some(0), 0), 1);
+        assert_eq!(presenter_screen(2, Some(0), 0), 1);
         // One screen, or slideshow not found: the main screen.
-        assert_eq!(teacher_screen(1, Some(0), 0), 0);
-        assert_eq!(teacher_screen(3, None, 2), 2);
+        assert_eq!(presenter_screen(1, Some(0), 0), 0);
+        assert_eq!(presenter_screen(3, None, 2), 2);
     }
 
     #[test]

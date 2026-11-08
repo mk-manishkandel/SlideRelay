@@ -1,9 +1,9 @@
 //! Keeps capture in sync with the session.
 //!
-//! A background thread checks once a second (or immediately after a teacher
+//! A background thread checks once a second (or immediately after a presenter
 //! command): is a broadcast running? Is PowerPoint's slideshow open? Then it
 //! starts, re-attaches or stops the window capture. This handles the
-//! slideshow starting late, ending, and being recreated (e.g. the teacher
+//! slideshow starting late, ending, and being recreated (e.g. the presenter
 //! exits and restarts the slideshow).
 
 use crate::capture::{self, ActiveCapture, Detection};
@@ -37,11 +37,11 @@ impl Wake {
     }
 }
 
-/// Problems shown to the teacher, in plain words.
+/// Problems shown to the presenter, in plain words.
 pub const PROBLEM_PERMISSION: &str =
     "SlideRelay needs Screen Recording permission. Click Fix this and switch SlideRelay on.";
 pub const PROBLEM_PRESENTER_ONLY: &str =
-    "Presenter View is on with only one screen, so students can't see your slides. Turn off Presenter View in the Slide Show tab.";
+    "Presenter View is on with only one screen, so viewers can't see your slides. Turn off Presenter View in the Slide Show tab.";
 pub const PROBLEM_CAPTURE_FAILED: &str =
     "SlideRelay can't capture the slideshow. Try ending and restarting the slideshow.";
 
@@ -81,7 +81,7 @@ fn run(state: Arc<AppState>) {
             continue;
         }
 
-        // Current settings (the teacher may change them mid-broadcast).
+        // Current settings (the presenter may change them mid-broadcast).
         let (max_fps, encode) = {
             let settings = state.settings.read().unwrap_or_else(|e| e.into_inner());
             (

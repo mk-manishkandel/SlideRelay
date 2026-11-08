@@ -70,7 +70,7 @@ cd companion/src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D 
   this because loopback counts as a secure address. The app answers Chromium's
   "Private Network Access" preflight.
 - Security: the app only listens on 127.0.0.1, checks the `Host` header (blocks DNS rebinding),
-  only accepts the add-in's web origin, and requires a token. The teacher approves the token once
+  only accepts the add-in's web origin, and requires a token. The presenter approves the token once
   by clicking **Allow** in the app ("pairing"). Only a hash of the token is saved on disk.
 - The API is versioned: see `shared/protocol.ts` (TypeScript) and
   `companion/src-tauri/src/control_api.rs` (Rust). Keep them in sync.

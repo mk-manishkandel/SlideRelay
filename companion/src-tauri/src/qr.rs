@@ -1,4 +1,4 @@
-//! QR code for the student link, as an SVG string.
+//! QR code for the viewer link, as an SVG string.
 
 use qrcode::render::svg;
 use qrcode::{EcLevel, QrCode};

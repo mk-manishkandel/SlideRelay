@@ -1,5 +1,5 @@
 # Publishes the PowerPoint add-in's web files to GitHub Pages on every push
-# to main. Teachers get add-in updates automatically — no reinstall needed.
+# to main. Presenters get add-in updates automatically — no reinstall needed.
 # Published at: https://mk-manishkandel.github.io/SlideRelay/
 name: Deploy add-in to GitHub Pages
 

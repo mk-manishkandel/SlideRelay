@@ -6,7 +6,7 @@ project uses [Semantic Versioning](https://semver.org/). The add-in and the comp
 app share one version number.
 
 The release workflow copies the section for each version into the GitHub Release notes,
-so write entries for teachers, in plain words.
+so write entries for presenters, in plain words.
 
 ## [Unreleased]
 

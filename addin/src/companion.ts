@@ -4,7 +4,7 @@
  * Why plain http://127.0.0.1 works from an https:// task pane: browsers treat
  * the loopback address as "potentially trustworthy", so it isn't blocked as
  * mixed content. The companion only listens on 127.0.0.1 (never the network)
- * and every command needs a secret token that the teacher approves once
+ * and every command needs a secret token that the presenter approves once
  * ("pairing").
  */
 import {
@@ -18,7 +18,7 @@ import {
   type ServerMessage,
   type SettingsView,
   type Status,
-  type TeacherSettings,
+  type PresenterSettings,
 } from '@sliderelay/shared/protocol';
 
 const TOKEN_KEY = 'sliderelay.token';
@@ -132,7 +132,7 @@ export async function checkCompanion(): Promise<Hello> {
 
 /**
  * Asks the app for permission to control it. The app shows an "Allow" prompt;
- * resolves with the teacher's answer ('approved', 'denied' or 'expired').
+ * resolves with the presenter's answer ('approved', 'denied' or 'expired').
  */
 export async function pair(): Promise<PairPoll['state']> {
   const { requestId } = await request<PairStart>('/v1/pair', {
@@ -140,7 +140,7 @@ export async function pair(): Promise<PairPoll['state']> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ clientName: 'PowerPoint add-in' }),
   });
-  // Poll for the teacher's answer for up to 2 minutes.
+  // Poll for the presenter's answer for up to 2 minutes.
   for (let i = 0; i < 120; i++) {
     await new Promise((r) => setTimeout(r, 1000));
     const poll = await request<PairPoll>(`/v1/pair/${encodeURIComponent(requestId)}`);
@@ -174,7 +174,7 @@ export function getSettings(): Promise<SettingsView> {
   return request<SettingsView>('/v1/settings');
 }
 
-export function saveSettings(settings: TeacherSettings): Promise<SettingsView> {
+export function saveSettings(settings: PresenterSettings): Promise<SettingsView> {
   return request<SettingsView>('/v1/settings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -11,7 +11,7 @@
   </head>
   <body>
     <main id="stage">
-      <img id="slide" alt="The teacher's current slide" hidden />
+      <img id="slide" alt="The presenter's current slide" hidden />
     </main>
 
     <!-- Status message (waiting, paused, reconnecting, ended…). -->
@@ -20,13 +20,13 @@
       <p id="message-detail" class="detail"></p>
     </div>
 
-    <!-- Small tag saying what the teacher did: paused (over the frozen slide)
-         or blanked (on a black screen), so students aren't left guessing. -->
+    <!-- Small tag saying what the presenter did: paused (over the frozen slide)
+         or blanked (on a black screen), so viewers aren't left guessing. -->
     <div id="mode-tag" class="tag" hidden></div>
 
-    <!-- PIN prompt (only if the teacher set a PIN). -->
+    <!-- PIN prompt (only if the presenter set a PIN). -->
     <form id="pin-form" class="pin" hidden>
-      <label for="pin-input">Enter the PIN your teacher gave you</label>
+      <label for="pin-input">Enter the PIN the presenter gave you</label>
       <input
         id="pin-input"
         inputmode="numeric"

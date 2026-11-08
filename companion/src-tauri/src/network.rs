@@ -1,4 +1,4 @@
-//! Picks the computer's address on the classroom network (the one students'
+//! Picks the computer's address on the classroom network (the one viewers'
 //! phones can reach), skipping VPNs, virtual machines and other adapters
 //! that phones can't see.
 
@@ -87,7 +87,7 @@ fn score(adapter: &Adapter) -> Option<i32> {
     Some(s)
 }
 
-/// Chooses the best address for students to connect to.
+/// Chooses the best address for viewers to connect to.
 /// `preferred` (from settings) wins if that address still exists.
 pub fn choose_lan_ip(adapters: &[Adapter], preferred: Option<&str>) -> Option<Ipv4Addr> {
     if let Some(p) = preferred.and_then(|p| p.parse::<Ipv4Addr>().ok()) {
@@ -167,7 +167,7 @@ mod tests {
     }
 
     #[test]
-    fn teacher_choice_wins_if_present() {
+    fn presenter_choice_wins_if_present() {
         let list = vec![a("en0", "192.168.1.23"), a("en5", "10.1.2.3")];
         assert_eq!(
             choose_lan_ip(&list, Some("10.1.2.3")),

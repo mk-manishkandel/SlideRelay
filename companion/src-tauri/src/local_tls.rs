@@ -9,7 +9,7 @@
 //! - is valid only for `localhost` / `127.0.0.1` and only for TLS servers,
 //! - is NOT a certificate authority, so it can't be used to vouch for any
 //!   other website even if someone copied it,
-//! - is trusted once by the teacher (macOS asks for their password).
+//! - is trusted once by the presenter (macOS asks for their password).
 //!
 //! The private key never leaves the app's config folder.
 
@@ -81,7 +81,7 @@ impl LocalCert {
     }
 
     /// Asks macOS to trust the certificate. macOS shows its own password
-    /// prompt; this blocks until the teacher answers.
+    /// prompt; this blocks until the presenter answers.
     pub fn trust(&self) -> anyhow::Result<()> {
         let keychain = dirs_home()?.join("Library/Keychains/login.keychain-db");
         let output = Command::new("/usr/bin/security")

@@ -5,8 +5,8 @@
 <h1 align="center">SlideRelay</h1>
 
 <p align="center">
-  Broadcast your live PowerPoint slideshow to students' phones over the classroom Wi-Fi.<br>
-  Students scan a QR code. They install nothing.
+  Broadcast your live PowerPoint slideshow to viewers' phones over the classroom Wi-Fi.<br>
+  Viewers scan a QR code. They install nothing.
 </p>
 
 > **Status: early development.** Milestone 1 (add-in ↔ app connection) is in place.
@@ -19,7 +19,7 @@ SlideRelay has two parts:
 1. **PowerPoint add-in** — the **Broadcast** button on the Home tab. It's a remote control
    for the app.
 2. **SlideRelay app** — a small app that runs in the menu bar (Mac) or system tray (Windows). It
-   captures **only the slideshow window** (never Presenter View) and serves it to students on
+   captures **only the slideshow window** (never Presenter View) and serves it to viewers on
    the local network.
 
 Nothing goes to the internet. Nothing is recorded or saved. No telemetry.
@@ -30,7 +30,7 @@ Nothing goes to the internet. Nothing is recorded or saved. No telemetry.
 | ------------ | --------------------------------------------------------------------- |
 | `addin/`     | Office.js add-in (TypeScript), deployed to GitHub Pages               |
 | `companion/` | Tauri 2 app: Rust core in `src-tauri/`, window UIs in `ui/`           |
-| `viewer/`    | The page students open in their browser                               |
+| `viewer/`    | The page viewers open in their browser                                |
 | `shared/`    | Design tokens, icons and the add-in ↔ app protocol, shared by all UIs |
 | `assets/`    | Logo (SVG) and every generated icon size                              |
 | `docs/`      | Install, release and developer guides                                 |

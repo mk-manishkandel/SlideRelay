@@ -1,7 +1,7 @@
 [package]
 name = "sliderelay"
 version = "0.1.0"
-description = "SlideRelay companion app: captures the PowerPoint slideshow window and streams it to students on the local network."
+description = "SlideRelay companion app: captures the PowerPoint slideshow window and streams it to viewers on the local network."
 authors = ["Manish Kandel and SlideRelay contributors"]
 license = "MIT"
 repository = "https://github.com/mk-manishkandel/SlideRelay"
@@ -33,7 +33,7 @@ anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
-# Milestone 2: streaming to students
+# Milestone 2: streaming to viewers
 bytes = "1"
 jpeg-encoder = "0.7"
 fast_image_resize = "6"
@@ -45,7 +45,7 @@ tauri-plugin-global-shortcut = "2"
 
 # macOS only: PowerPoint for Mac's add-in panel refuses plain http://127.0.0.1,
 # so on Mac the control API is also served over HTTPS with a local
-# certificate that the teacher trusts once (see src/local_tls.rs).
+# certificate that the presenter trusts once (see src/local_tls.rs).
 [target.'cfg(target_os = "macos")'.dependencies]
 rcgen = "0.14"
 time = "0.3"

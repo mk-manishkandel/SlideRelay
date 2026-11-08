@@ -2,7 +2,7 @@
   "name": "sliderelay",
   "version": "0.1.0",
   "private": true,
-  "description": "Broadcast your live PowerPoint slideshow to students' phones over the local Wi-Fi.",
+  "description": "Broadcast your live PowerPoint slideshow to viewers' phones over the local Wi-Fi.",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -1,11 +1,11 @@
-//! End-to-end tests of the students' server over real sockets: many viewers,
+//! End-to-end tests of the viewers' server over real sockets: many viewers,
 //! pause/blank/stop, old links and the PIN.
 
 use futures_util::{SinkExt, StreamExt};
 use sliderelay_lib::config::Settings;
 use sliderelay_lib::pairing::Pairing;
 use sliderelay_lib::state::{AppState, Command, NoUi};
-use sliderelay_lib::student_server;
+use sliderelay_lib::viewer_server;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio_tungstenite::tungstenite::Message;
@@ -18,7 +18,7 @@ async fn server(settings: Settings) -> (Arc<AppState>, u16) {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let port = listener.local_addr().unwrap().port();
     let s = state.clone();
-    tokio::spawn(async move { student_server::serve(listener, s).await });
+    tokio::spawn(async move { viewer_server::serve(listener, s).await });
     (state, port)
 }
 
@@ -68,7 +68,7 @@ async fn sixty_viewers_get_the_same_frame() {
         assert_eq!(mode_of(&next(&mut ws).await), "live");
         viewers.push(ws);
     }
-    // The count reaches the teacher.
+    // The count reaches the presenter.
     tokio::time::sleep(Duration::from_millis(200)).await;
     assert_eq!(state.status().viewers, 60);
 
@@ -89,7 +89,7 @@ async fn sixty_viewers_get_the_same_frame() {
 }
 
 #[tokio::test]
-async fn pause_blank_and_stop_reach_students() {
+async fn pause_blank_and_stop_reach_viewers() {
     let (state, port) = server(Settings::default()).await;
     state.run(Command::Start).unwrap();
     let code = code(&state);

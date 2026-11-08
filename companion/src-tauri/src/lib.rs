@@ -3,17 +3,17 @@
 //! Module map:
 //! - `session`     — broadcast state machine (pure logic, unit-tested)
 //! - `pairing`     — one-time approval of the PowerPoint add-in (tokens)
-//! - `config`      — teacher settings saved as JSON
+//! - `config`      — presenter settings saved as JSON
 //! - `state`       — shared app state + commands (Start/Stop/Pause/...)
 //! - `control_api` — localhost HTTP/WebSocket API used by the add-in
 //! - `local_tls`   — macOS only: HTTPS for the add-in (PowerPoint for Mac refuses
 //!   plain http to 127.0.0.1)
 //! - `capture`     — finds the slideshow window (never Presenter View), captures it
 //! - `broadcaster` — keeps capture in sync with the session
-//! - `stream`      — encodes frames once and shares them with all students
-//! - `student_server` — the web page + live stream students open
+//! - `stream`      — encodes frames once and shares them with all viewers
+//! - `viewer_server` — the web page + live stream viewers open
 //! - `network`     — picks the classroom network address
-//! - `qr`          — QR code for the student link
+//! - `qr`          — QR code for the viewer link
 //! - `toolbar`     — floating toolbar, projector QR and keyboard shortcuts
 //! - this file     — Tauri glue: windows, tray icon, logging, startup
 
@@ -29,8 +29,8 @@ pub mod qr;
 pub mod session;
 pub mod state;
 pub mod stream;
-pub mod student_server;
 pub mod toolbar;
+pub mod viewer_server;
 
 use config::{Paths, Settings};
 use pairing::Pairing;
@@ -155,7 +155,7 @@ struct Qr {
     svg: String,
 }
 
-/// The student link and its QR code (only while broadcasting).
+/// The viewer link and its QR code (only while broadcasting).
 #[tauri::command]
 fn get_qr(state: SharedState) -> Result<Qr, String> {
     let url = state
@@ -224,7 +224,7 @@ async fn connection_setup_needed(app: AppHandle) -> bool {
     }
 }
 
-/// Runs the one-time step: macOS asks for the teacher's password to trust
+/// Runs the one-time step: macOS asks for the presenter's password to trust
 /// SlideRelay's local certificate.
 #[tauri::command]
 async fn setup_connection(app: AppHandle) -> Result<(), String> {
@@ -326,20 +326,20 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Starts the students' web server (restarting it if the teacher changes
+/// Starts the viewers' web server (restarting it if the presenter changes
 /// the port) and keeps the link's network address up to date (e.g. if the
 /// laptop moves to another Wi-Fi).
-fn start_student_server(state: Arc<AppState>) {
+fn start_viewer_server(state: Arc<AppState>) {
     let server_state = state.clone();
     tauri::async_runtime::spawn(async move {
         let state = server_state;
         let mut port_rx = state.watch_port();
         loop {
             let preferred = *port_rx.borrow_and_update();
-            let listener = match student_server::bind(preferred).await {
+            let listener = match viewer_server::bind(preferred).await {
                 Ok(l) => l,
                 Err(e) => {
-                    tracing::error!("student server could not start: {e}");
+                    tracing::error!("viewer server could not start: {e}");
                     state.update(|s| {
                         s.set_problem(Some(
                             "SlideRelay couldn't open a network port. Restart SlideRelay and try again."
@@ -353,15 +353,12 @@ fn start_student_server(state: Arc<AppState>) {
                 }
             };
             let port = listener.local_addr().map(|a| a.port()).ok();
-            *state
-                .student_port
-                .write()
-                .unwrap_or_else(|e| e.into_inner()) = port;
+            *state.viewer_port.write().unwrap_or_else(|e| e.into_inner()) = port;
             refresh_link(&state);
             tokio::select! {
-                result = student_server::serve(listener, state.clone()) => {
+                result = viewer_server::serve(listener, state.clone()) => {
                     if let Err(e) = result {
-                        tracing::error!("student server stopped: {e}");
+                        tracing::error!("viewer server stopped: {e}");
                     }
                     return;
                 }
@@ -369,7 +366,7 @@ fn start_student_server(state: Arc<AppState>) {
                     if changed.is_err() {
                         return;
                     }
-                    tracing::info!("student port setting changed; restarting the student server");
+                    tracing::info!("viewer port setting changed; restarting the viewer server");
                 }
             }
         }
@@ -383,10 +380,10 @@ fn start_student_server(state: Arc<AppState>) {
     });
 }
 
-/// Works out the student link from the current network and port.
+/// Works out the viewer link from the current network and port.
 fn refresh_link(state: &AppState) {
     let preferred_ip = state.settings().lan_ip;
-    let port = *state.student_port.read().unwrap_or_else(|e| e.into_inner());
+    let port = *state.viewer_port.read().unwrap_or_else(|e| e.into_inner());
     let ip = network::choose_lan_ip(&network::adapters(), preferred_ip.as_deref());
     let url = ip.zip(port).map(|(ip, port)| network::base_url(ip, port));
     let changed = {
@@ -396,7 +393,7 @@ fn refresh_link(state: &AppState) {
         changed
     };
     if changed {
-        tracing::info!("student link base: {url:?}");
+        tracing::info!("viewer link base: {url:?}");
         state.update(|_| ());
     }
 }
@@ -544,12 +541,12 @@ pub fn run() {
 
             // Capture + streaming.
             broadcaster::start(state.clone());
-            start_student_server(state.clone());
+            start_viewer_server(state.clone());
 
             build_tray(&handle)?;
 
             // SlideRelay lives in the menu bar / system tray. Only open its
-            // window when the teacher has something to do there (a one-time
+            // window when the presenter has something to do there (a one-time
             // setup step); otherwise start quietly, so there's no window to
             // close (on some Macs closing a window force-quits the app).
             let autostart = std::env::args().any(|a| a == AUTOSTART_ARG);

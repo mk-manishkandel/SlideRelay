@@ -2,7 +2,7 @@
  * The SlideRelay task pane inside PowerPoint.
  *
  * It is only a remote control: all the real work (capturing the slideshow,
- * serving students) happens in the companion app. This file just shows the
+ * serving viewers) happens in the companion app. This file just shows the
  * app's status and sends button clicks to it.
  */
 import '@sliderelay/shared/theme.css';
@@ -12,7 +12,7 @@ import type {
   Quality,
   SettingsView,
   Status,
-  TeacherSettings,
+  PresenterSettings,
   ToolbarPosition,
 } from '@sliderelay/shared/protocol';
 import { icons } from '@sliderelay/shared/icons';
@@ -30,7 +30,7 @@ import {
   type ConnectionProblem,
 } from './companion';
 import { reloadIfOutdated } from './self-update';
-import { isStudentLink, qrSvg, shortLink } from './qr';
+import { isViewerLink, qrSvg, shortLink } from './qr';
 
 declare const __BUILD_ID__: string;
 
@@ -85,14 +85,14 @@ function render(status: Status): void {
 
   let line: string;
   if (status.state === 'waiting') line = 'Start your slideshow to go live.';
-  else if (status.blanked) line = 'Blanked — students see "Screen hidden by your teacher".';
-  else if (status.paused) line = 'Paused — students see a frozen slide.';
-  else line = 'Live — students see your slideshow.';
+  else if (status.blanked) line = 'Blanked — viewers see "Screen hidden by the presenter".';
+  else if (status.paused) line = 'Paused — viewers see a frozen slide.';
+  else line = 'Live — viewers see your slideshow.';
   $('status-line').textContent = line;
   $('status-line').dataset.tone = status.blanked || status.paused ? 'warn' : 'normal';
 
   $('viewers').textContent =
-    status.viewers === 1 ? '1 student connected' : `${status.viewers} students connected`;
+    status.viewers === 1 ? '1 viewer connected' : `${status.viewers} viewers connected`;
 
   const problem = $('problem');
   problem.textContent = status.problem ?? '';
@@ -107,14 +107,14 @@ function render(status: Status): void {
   $('blank-btn').dataset.command = status.blanked ? 'unblank' : 'blank';
 }
 
-// ---------- Student link and QR code ----------
+// ---------- Viewer link and QR code ----------
 
 let shownUrl: string | null = null;
 let qrDialog: Office.Dialog | null = null;
 
 /** Draws the link and QR in the panel; only redraws when the link changes. */
 function renderShare(url: string | null): void {
-  const link = isStudentLink(url) ? url : null;
+  const link = isViewerLink(url) ? url : null;
   if (link === shownUrl) return;
   shownUrl = link;
   $('share').hidden = !link;
@@ -143,7 +143,7 @@ function showQrDialog(): void {
     { width: 80, height: 85, displayInIframe: false },
     (result) => {
       if (result.status !== Office.AsyncResultStatus.Succeeded) {
-        showError('Could not open the QR window. Students can scan the code above.');
+        showError('Could not open the QR window. Viewers can scan the code above.');
         return;
       }
       const dialog = result.value;
@@ -214,7 +214,7 @@ function fillSettings(view: SettingsView): void {
 }
 
 /** Reads the form; returns a plain-words problem instead if something's off. */
-function readSettings(base: TeacherSettings): TeacherSettings | string {
+function readSettings(base: PresenterSettings): PresenterSettings | string {
   const pinOn = $<HTMLInputElement>('set-pin-on').checked;
   const pin = $<HTMLInputElement>('set-pin').value.trim();
   if (pinOn && !/^\d{4,8}$/.test(pin)) return 'The PIN must be 4 to 8 digits.';
@@ -306,7 +306,7 @@ async function connect(): Promise<void> {
       $('live-pill').hidden = true;
       renderShare(null);
       showView(err.problem);
-      // Keep retrying quietly, except while waiting for the teacher to pair.
+      // Keep retrying quietly, except while waiting for the presenter to pair.
       if (err.problem !== 'not-paired') scheduleRetry();
     } else {
       showError('Something went wrong talking to the SlideRelay app. Retrying…');
@@ -358,7 +358,7 @@ function wire(): void {
   // The button is a target=_blank link to sliderelay://open: Office hands
   // new-window links to the operating system, which launches the app that
   // registered the sliderelay:// scheme. (A plain link inside the panel is
-  // ignored.) "Didn't open?" falls back to a page in the teacher's browser.
+  // ignored.) "Didn't open?" falls back to a page in the presenter's browser.
   // Meanwhile keep retrying so the panel connects as soon as the app is up.
   $('open-app-btn').addEventListener('click', () => scheduleRetry());
 

@@ -2,7 +2,7 @@
 //!
 //! 1. The add-in calls `POST /v1/pair`. We create a pending request and the app
 //!    shows an "Allow PowerPoint to control SlideRelay?" window.
-//! 2. The teacher clicks Allow. We create a random 256-bit token.
+//! 2. The presenter clicks Allow. We create a random 256-bit token.
 //! 3. The add-in polls `GET /v1/pair/{id}` and receives the token exactly once.
 //!    It sends it as `Authorization: Bearer <token>` from then on.
 //!
@@ -17,7 +17,7 @@ use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use subtle::ConstantTimeEq;
 
-/// How long the teacher has to click Allow.
+/// How long the presenter has to click Allow.
 const REQUEST_TTL: Duration = Duration::from_secs(120);
 /// Limits how many prompts other software could pop up at once.
 const MAX_PENDING: usize = 3;
@@ -108,7 +108,7 @@ impl Pairing {
         Ok(id)
     }
 
-    /// The teacher's answer from the "Allow?" window.
+    /// The presenter's answer from the "Allow?" window.
     pub fn answer(&mut self, id: &str, allow: bool) -> Result<(), PairError> {
         self.expire_old();
         let pending = self.pending.get_mut(id).ok_or(PairError::UnknownRequest)?;
@@ -130,7 +130,7 @@ impl Pairing {
         Ok(())
     }
 
-    /// The add-in asks "did the teacher answer yet?". A token is handed out
+    /// The add-in asks "did the presenter answer yet?". A token is handed out
     /// only once; after that the request is forgotten.
     pub fn poll(&mut self, id: &str) -> PairPoll {
         self.expire_old();
@@ -150,7 +150,7 @@ impl Pairing {
         poll
     }
 
-    /// Ids of requests still waiting for the teacher.
+    /// Ids of requests still waiting for the presenter.
     pub fn open_requests(&self) -> Vec<String> {
         self.pending
             .iter()

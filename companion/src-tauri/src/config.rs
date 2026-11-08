@@ -1,4 +1,4 @@
-//! Teacher settings, saved as JSON in the app's config folder.
+//! Presenter settings, saved as JSON in the app's config folder.
 //!
 //! Missing or broken settings files fall back to defaults, so a bad file can
 //! never stop the app from starting.
@@ -28,14 +28,14 @@ pub enum ToolbarPosition {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Settings {
-    /// Port students connect to. 0 = choose automatically (80, then 8080, ...).
+    /// Port viewers connect to. 0 = choose automatically (80, then 8080, ...).
     pub port: u16,
     pub quality: Quality,
-    /// Maximum frames per second sent to students.
+    /// Maximum frames per second sent to viewers.
     pub max_fps: u8,
     /// Network adapter IP to advertise; `None` = pick automatically.
     pub lan_ip: Option<String>,
-    /// Optional PIN students must enter (digits only).
+    /// Optional PIN viewers must enter (digits only).
     pub pin: Option<String>,
     pub toolbar_position: ToolbarPosition,
     pub launch_at_login: bool,

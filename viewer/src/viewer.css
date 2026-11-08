@@ -1,5 +1,5 @@
 /*
- * Student viewer. The slide fills the screen on a black background; text
+ * Viewer page. The slide fills the screen on a black background; text
  * uses the SlideRelay font and accent so it feels like the same product.
  */
 
@@ -40,7 +40,7 @@ body {
   -webkit-user-select: none;
 }
 
-/* Blank: the slide is hidden; only the "hidden by your teacher" tag shows. */
+/* Blank: the slide is hidden; only the "hidden by the presenter" tag shows. */
 body.blank #slide {
   visibility: hidden;
 }

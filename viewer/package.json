@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "The page students open to watch the slideshow. Built into the companion app.",
+  "description": "The page viewers open to watch the slideshow. Built into the companion app.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

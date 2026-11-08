@@ -33,12 +33,12 @@ function render(s: Status): void {
   $('dot').dataset.tone = tone;
   $('viewers').textContent = String(s.viewers);
   $('people').parentElement!.title =
-    s.viewers === 1 ? '1 student watching' : `${s.viewers} students watching`;
+    s.viewers === 1 ? '1 viewer watching' : `${s.viewers} viewers watching`;
 
   if (s.paused) setButton('pause', 'play', 'Resume', `Resume (${key('P')})`);
-  else setButton('pause', 'pause', 'Pause', `Pause: students keep seeing this slide (${key('P')})`);
+  else setButton('pause', 'pause', 'Pause', `Pause: viewers keep seeing this slide (${key('P')})`);
   if (s.blanked) setButton('blank', 'unblank', 'Show', `Show slides again (${key('B')})`);
-  else setButton('blank', 'blank', 'Blank', `Blank: hide the slide from students (${key('B')})`);
+  else setButton('blank', 'blank', 'Blank', `Blank: hide the slide from viewers (${key('B')})`);
 }
 
 async function send(command: string): Promise<void> {

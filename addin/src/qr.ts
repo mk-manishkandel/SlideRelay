@@ -1,4 +1,4 @@
-// Draws the student link as a QR code, in the panel itself (no app window).
+// Draws the viewer link as a QR code, in the panel itself (no app window).
 import qrcode from 'qrcode-generator';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -23,7 +23,7 @@ export function qrSvg(text: string): SVGSVGElement {
   svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
   svg.setAttribute('shape-rendering', 'crispEdges');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'QR code for the student link');
+  svg.setAttribute('aria-label', 'QR code for the viewer link');
   const bg = document.createElementNS(SVG_NS, 'rect');
   bg.setAttribute('width', String(size));
   bg.setAttribute('height', String(size));
@@ -41,7 +41,7 @@ export function shortLink(url: string): string {
 }
 
 /** Only links SlideRelay makes: plain http(s) addresses. */
-export function isStudentLink(value: string | null): value is string {
+export function isViewerLink(value: string | null): value is string {
   if (!value) return false;
   try {
     const u = new URL(value);

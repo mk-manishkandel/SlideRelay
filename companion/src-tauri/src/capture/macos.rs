@@ -56,7 +56,7 @@ pub fn find_powerpoint_windows() -> Result<Vec<Candidate>, CaptureError> {
     let list = windows
         .into_iter()
         // Not only on-screen windows: on a single screen the slideshow lives in
-        // its own full-screen Space, and is "off screen" whenever the teacher
+        // its own full-screen Space, and is "off screen" whenever the presenter
         // switches to the PowerPoint panel. It still exists and can be captured.
         .filter(|w| w.frame.size.width > 50.0 && w.frame.size.height > 50.0)
         .filter(|w| {

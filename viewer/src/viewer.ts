@@ -1,5 +1,5 @@
 /**
- * Student viewer: connects to the teacher's SlideRelay app over the local
+ * Viewer page: connects to the presenter's SlideRelay app over the local
  * Wi-Fi and shows the live slideshow.
  *
  * Messages from the app:
@@ -41,31 +41,37 @@ function hideMessage(): void {
   message.hidden = true;
 }
 
+/**
+ * The small label at the top of the screen saying what the presenter is
+ * doing. Waiting, paused and blank all use it, so viewers always know why
+ * the screen looks the way it does.
+ */
+function updateTag(): void {
+  let text: string | null = null;
+  if (mode === 'paused') text = 'Paused by the presenter';
+  else if (mode === 'blank') text = 'Screen hidden by the presenter';
+  else if (mode === 'waiting' || (mode === 'live' && !hasFrame)) {
+    text = 'Waiting for the presenter…';
+  }
+  const tag = $('mode-tag');
+  tag.textContent = text ?? '';
+  tag.hidden = text === null;
+}
+
 function applyMode(next: Mode): void {
   mode = next;
   document.body.classList.toggle('blank', next === 'blank');
-  const tag = $('mode-tag');
-  tag.textContent =
-    next === 'paused'
-      ? 'Paused by your teacher'
-      : next === 'blank'
-        ? 'Screen hidden by your teacher'
-        : '';
-  tag.hidden = next !== 'paused' && next !== 'blank';
 
   switch (next) {
     case 'waiting':
-      showMessage('Waiting for the presenter…', 'The slides will appear here automatically.');
       slide.hidden = true;
       hasFrame = false;
+      hideMessage();
       break;
     case 'live':
     case 'paused':
-      if (hasFrame) hideMessage();
-      else showMessage('Waiting for the presenter…');
-      break;
     case 'blank':
-      hideMessage(); // black screen with the "hidden by your teacher" tag
+      hideMessage();
       break;
     case 'ended':
       ended = true;
@@ -73,6 +79,7 @@ function applyMode(next: Mode): void {
       showMessage('The broadcast has ended', 'You can close this page.');
       break;
   }
+  updateTag();
 }
 
 function showFrame(data: Blob): void {
@@ -86,6 +93,7 @@ function showFrame(data: Blob): void {
   slide.hidden = false;
   hasFrame = true;
   if (mode === 'live' || mode === 'paused') hideMessage();
+  updateTag();
 }
 
 // ---------- Connection ----------
@@ -119,8 +127,8 @@ function connect(): void {
   ws.onclose = () => {
     socket = null;
     if (ended) return;
-    // Wi-Fi blip or the teacher's laptop slept: keep trying quietly.
-    showMessage('Reconnecting…', 'Check that you are on the same Wi-Fi as your teacher.');
+    // Wi-Fi blip or the presenter's laptop slept: keep trying quietly.
+    showMessage('Reconnecting…', 'Check that you are on the same Wi-Fi as the presenter.');
     setTimeout(connect, retryDelay);
     retryDelay = Math.min(retryDelay * 2, 5000);
   };
@@ -184,7 +192,7 @@ fsButton.addEventListener('click', async () => {
 // ---------- Start ----------
 
 if (!code) {
-  showMessage('Almost there', 'Type the full link shown on your teacher’s screen.');
+  showMessage('Almost there', 'Type the full link shown on the presenter’s screen.');
 } else {
   showMessage('Connecting…');
   connect();

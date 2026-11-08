@@ -2,10 +2,10 @@
 <!--
   SlideRelay add-in manifest (add-in only XML manifest).
 
-  Teachers sideload this file once. After that, every update to the add-in's
+  Presenters sideload this file once. After that, every update to the add-in's
   web files on GitHub Pages reaches them automatically.
 
-  KEEP THIS FILE STABLE. Changing any of the following forces every teacher to
+  KEEP THIS FILE STABLE. Changing any of the following forces every presenter to
   remove and re-add the manifest (see docs/RELEASING.md):
     - Id, the ribbon buttons/labels/icons, Permissions, AppDomains,
       SourceLocation or any other URL.
@@ -22,7 +22,7 @@
   <ProviderName>SlideRelay (open source)</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="SlideRelay"/>
-  <Description DefaultValue="Broadcast your live slideshow to students' phones over the classroom Wi-Fi."/>
+  <Description DefaultValue="Broadcast your live slideshow to viewers' phones over the classroom Wi-Fi."/>
   <IconUrl DefaultValue="https://mk-manishkandel.github.io/SlideRelay/assets/logo-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://mk-manishkandel.github.io/SlideRelay/assets/logo-64.png"/>
   <SupportUrl DefaultValue="https://github.com/mk-manishkandel/SlideRelay#readme"/>
@@ -93,8 +93,8 @@
         <bt:String id="Button.Label" DefaultValue="Broadcast"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Click Broadcast on the Home tab to share your slideshow with students' phones."/>
-        <bt:String id="Button.Tooltip" DefaultValue="Show your live slideshow on students' phones over the classroom Wi-Fi."/>
+        <bt:String id="GetStarted.Description" DefaultValue="Click Broadcast on the Home tab to share your slideshow with viewers' phones."/>
+        <bt:String id="Button.Tooltip" DefaultValue="Show your live slideshow on viewers' phones over the classroom Wi-Fi."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

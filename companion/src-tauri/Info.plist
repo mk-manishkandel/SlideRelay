@@ -4,7 +4,7 @@
 <plist version="1.0">
 <dict>
   <key>NSLocalNetworkUsageDescription</key>
-  <string>SlideRelay shares your slideshow with students' phones on this Wi-Fi network.</string>
+  <string>SlideRelay shares your slideshow with viewers' phones on this Wi-Fi network.</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.education</string>
 </dict>

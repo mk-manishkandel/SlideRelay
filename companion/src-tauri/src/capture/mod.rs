@@ -2,8 +2,8 @@
 //! window. The Presenter View is never captured.
 //!
 //! Safety rule: if we can't be sure which window is the slideshow, we
-//! capture nothing (students see "Waiting for the presenter…"). Showing
-//! nothing is always better than showing the teacher's notes.
+//! capture nothing (viewers see "Waiting for the presenter…"). Showing
+//! nothing is always better than showing the presenter's notes.
 //!
 //! Platform code (`macos.rs`, `windows.rs`) only lists PowerPoint's windows
 //! and runs the OS capture API. The decision of which window to capture is
@@ -45,7 +45,7 @@ pub enum Detection {
     /// No slideshow is running.
     NoSlideshow,
     /// Presenter View is open but no audience window exists (one screen
-    /// with Presenter View on). We can't show students anything.
+    /// with Presenter View on). We can't show viewers anything.
     PresenterOnly,
 }
 

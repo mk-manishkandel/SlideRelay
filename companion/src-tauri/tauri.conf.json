@@ -33,8 +33,8 @@
     "active": true,
     "targets": ["nsis", "msi", "dmg", "app"],
     "category": "Education",
-    "shortDescription": "Broadcast your slideshow to students' phones",
-    "longDescription": "SlideRelay streams the live PowerPoint slideshow window to students' phones and laptops over the local Wi-Fi. Students only need a browser.",
+    "shortDescription": "Broadcast your slideshow to viewers' phones",
+    "longDescription": "SlideRelay streams the live PowerPoint slideshow window to viewers' phones and laptops over the local Wi-Fi. Viewers only need a browser.",
     "copyright": "© SlideRelay contributors. MIT License.",
     "icon": [
       "icons/32x32.png",

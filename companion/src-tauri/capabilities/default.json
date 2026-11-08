@@ -1,7 +1,17 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Minimal permissions for SlideRelay's own windows: listen to app events and call SlideRelay's own commands. No file system, shell or network access is granted to the UI.",
-  "windows": ["main", "pair", "qr"],
-  "permissions": ["core:event:allow-listen", "core:event:allow-unlisten", "core:window:allow-close"]
+  "description": "Minimal permissions for SlideRelay's own windows: listen to app events, call SlideRelay's own commands, and drag the toolbar. No file system, shell or network access is granted to the UI.",
+  "windows": [
+    "main",
+    "pair",
+    "qr",
+    "toolbar"
+  ],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging"
+  ]
 }

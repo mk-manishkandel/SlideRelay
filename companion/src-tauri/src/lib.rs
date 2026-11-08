@@ -14,6 +14,7 @@
 //! - `student_server` — the web page + live stream students open
 //! - `network`     — picks the classroom network address
 //! - `qr`          — QR code for the student link
+//! - `toolbar`     — floating toolbar, projector QR and keyboard shortcuts
 //! - this file     — Tauri glue: windows, tray icon, logging, startup
 
 pub mod broadcaster;
@@ -29,6 +30,7 @@ pub mod session;
 pub mod state;
 pub mod stream;
 pub mod student_server;
+pub mod toolbar;
 
 use config::{Paths, Settings};
 use pairing::Pairing;
@@ -75,11 +77,12 @@ impl Ui for TauriUi {
     }
 
     fn show_qr(&self) {
-        show_qr_window(&self.app);
+        toolbar::show_qr(&self.app);
     }
 
     fn settings_changed(&self, settings: &Settings) {
         apply_launch_at_login(&self.app, settings.launch_at_login);
+        toolbar::reposition_toolbar(&self.app);
         // A new network choice shows up in the link straight away.
         if let Some(state) = self.app.try_state::<Arc<AppState>>() {
             refresh_link(&state);
@@ -108,24 +111,6 @@ fn apply_launch_at_login(app: &AppHandle, on: bool) {
     };
     if let Err(e) = result {
         tracing::warn!("could not change launch at login: {e}");
-    }
-}
-
-fn show_qr_window(app: &AppHandle) {
-    if let Some(existing) = app.get_webview_window("qr") {
-        let _ = existing.show();
-        let _ = existing.set_focus();
-        return;
-    }
-    let result = WebviewWindowBuilder::new(app, "qr", WebviewUrl::App("qr.html".into()))
-        .title("Scan to join")
-        .inner_size(520.0, 640.0)
-        .min_inner_size(360.0, 460.0)
-        .center()
-        .focused(true)
-        .build();
-    if let Err(e) = result {
-        tracing::error!("could not open QR window: {e}");
     }
 }
 
@@ -181,49 +166,30 @@ fn get_qr(state: SharedState) -> Result<Qr, String> {
     Ok(Qr { url, svg })
 }
 
-/// Puts the QR window full screen on the screen showing the slideshow
-/// (or back to a normal window).
+/// The toolbar's buttons: run the command, then hand the keyboard back to
+/// PowerPoint so arrow keys keep changing slides.
 #[tauri::command]
-fn qr_projector(app: AppHandle, state: SharedState, on: bool) -> Result<(), String> {
-    let window = app
-        .get_webview_window("qr")
-        .ok_or("QR window is not open.")?;
-    if !on {
-        let _ = window.set_fullscreen(false);
-        let _ = window.set_always_on_top(false);
-        return Ok(());
-    }
-    let bounds = *state
-        .slideshow_bounds
-        .lock()
-        .unwrap_or_else(|e| e.into_inner());
-    if let (Some((x, y, w, h)), Ok(monitors)) = (bounds, window.available_monitors()) {
-        let (cx, cy) = (x + w / 2.0, y + h / 2.0);
-        let target = monitors.into_iter().find(|m| {
-            // macOS reports window bounds in points, Windows in pixels.
-            let scale = if cfg!(target_os = "macos") {
-                m.scale_factor()
-            } else {
-                1.0
-            };
-            let (mx, my) = (m.position().x as f64 / scale, m.position().y as f64 / scale);
-            let (mw, mh) = (
-                m.size().width as f64 / scale,
-                m.size().height as f64 / scale,
-            );
-            cx >= mx && cx < mx + mw && cy >= my && cy < my + mh
-        });
-        if let Some(m) = target {
-            let _ = window.set_position(*m.position());
+fn toolbar_command(app: AppHandle, state: SharedState, command: String) -> Result<Status, String> {
+    let result = match command.as_str() {
+        "toggle-qr" => {
+            toolbar::toggle_qr(&app);
+            Ok(state.status())
         }
-    }
-    window.set_always_on_top(true).map_err(|e| e.to_string())?;
-    window.set_fullscreen(true).map_err(|e| e.to_string())?;
-    let _ = window.set_focus();
-    Ok(())
+        // "Keep going" after Stop: nothing to do but give the keyboard back.
+        "refocus" => Ok(state.status()),
+        _ => run_command(state, command),
+    };
+    toolbar::refocus_powerpoint(&app);
+    result
 }
 
-/// macOS: is Screen Recording permission still missing?
+/// The projector QR code hides itself when clicked.
+#[tauri::command]
+fn hide_qr(app: AppHandle) {
+    toolbar::hide_qr(&app);
+    toolbar::refocus_powerpoint(&app);
+}
+
 #[tauri::command]
 fn screen_permission_needed() -> bool {
     !capture::has_permission()
@@ -441,6 +407,24 @@ fn refresh_link(state: &AppState) {
     }
 }
 
+/// Shows the toolbar and takes the shortcuts while broadcasting; moves the
+/// toolbar off the projector once the slideshow is found.
+fn on_broadcast_state(app: &AppHandle, from: session::BroadcastState, to: session::BroadcastState) {
+    use session::BroadcastState::Idle;
+    match (from, to) {
+        (Idle, _) => {
+            toolbar::show_toolbar(app);
+            toolbar::register_shortcuts(app);
+        }
+        (_, Idle) => {
+            toolbar::hide_toolbar(app);
+            toolbar::hide_qr(app);
+            toolbar::unregister_shortcuts(app);
+        }
+        _ => toolbar::reposition_toolbar(app),
+    }
+}
+
 /// True if a one-time setup step is still needed (shown in the main window).
 fn needs_attention(app: &AppHandle) -> bool {
     #[cfg(target_os = "macos")]
@@ -471,6 +455,15 @@ pub fn run() {
             show_main_window(app);
         }))
         .plugin(tauri_plugin_deep_link::init())
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, shortcut, event| {
+                    if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                        toolbar::on_shortcut(app, shortcut);
+                    }
+                })
+                .build(),
+        )
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec![AUTOSTART_ARG]),
@@ -483,7 +476,8 @@ pub fn run() {
             connection_setup_needed,
             setup_connection,
             get_qr,
-            qr_projector,
+            toolbar_command,
+            hide_qr,
             screen_permission_needed,
             open_screen_permission_settings
         ])
@@ -514,9 +508,14 @@ pub fn run() {
             let mut rx = state.subscribe();
             let emit_handle = handle.clone();
             tauri::async_runtime::spawn(async move {
+                let mut last = session::BroadcastState::Idle;
                 while rx.changed().await.is_ok() {
                     let status = rx.borrow_and_update().clone();
-                    let _ = emit_handle.emit("status", status);
+                    let _ = emit_handle.emit("status", &status);
+                    if status.state != last {
+                        on_broadcast_state(&emit_handle, last, status.state);
+                        last = status.state;
+                    }
                 }
             });
 

@@ -41,6 +41,7 @@ if-addrs = "0.15"
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }
 rust-embed = { version = "8", features = ["mime-guess"] }
 tauri-plugin-autostart = "2"
+tauri-plugin-global-shortcut = "2"
 
 # macOS only: PowerPoint for Mac's add-in panel refuses plain http://127.0.0.1,
 # so on Mac the control API is also served over HTTPS with a local
@@ -51,6 +52,9 @@ time = "0.3"
 screencapturekit = "11"
 axum-server = { version = "0.9", features = ["tls-rustls-no-provider"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSWindow", "NSResponder", "NSRunningApplication"] }
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString", "NSArray"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-capture = "2"

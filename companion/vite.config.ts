@@ -20,6 +20,7 @@ export default defineConfig({
         main: page('index'),
         pair: page('pair'),
         qr: page('qr'),
+        toolbar: page('toolbar'),
       },
     },
   },

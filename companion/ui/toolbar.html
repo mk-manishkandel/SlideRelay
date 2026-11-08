@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SlideRelay</title>
+    <script type="module" src="./toolbar.ts"></script>
+  </head>
+  <body class="toolbar-body">
+    <!-- Drag anywhere that isn't a button to move the toolbar. -->
+    <div class="toolbar" data-tauri-drag-region>
+      <span class="tb-status" data-tauri-drag-region>
+        <span id="dot" class="tb-dot" data-tauri-drag-region></span>
+        <span id="state" data-tauri-drag-region>Live</span>
+      </span>
+      <span class="tb-viewers" title="Students watching" data-tauri-drag-region>
+        <span id="people" class="tb-icon" data-tauri-drag-region></span>
+        <span id="viewers" data-tauri-drag-region>0</span>
+      </span>
+
+      <div id="actions" class="tb-actions">
+        <button id="pause" class="tb-btn" type="button">
+          <span class="tb-icon"></span><span class="tb-label"></span>
+        </button>
+        <button id="blank" class="tb-btn" type="button">
+          <span class="tb-icon"></span><span class="tb-label"></span>
+        </button>
+        <button id="qr" class="tb-btn" type="button">
+          <span class="tb-icon"></span><span class="tb-label">QR code</span>
+        </button>
+        <button id="stop" class="tb-btn tb-stop" type="button">
+          <span class="tb-icon"></span><span class="tb-label">Stop</span>
+        </button>
+      </div>
+
+      <div id="confirm" class="tb-actions" hidden>
+        <span class="tb-ask" data-tauri-drag-region>Stop the broadcast?</span>
+        <button id="stop-no" class="tb-btn" type="button">Keep going</button>
+        <button id="stop-yes" class="tb-btn tb-stop-yes" type="button">Stop</button>
+      </div>
+    </div>
+  </body>
+</html>

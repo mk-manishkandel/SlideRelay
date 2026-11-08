@@ -1,10 +1,9 @@
-// QR window: big QR code + short link. "Show on projector" puts it full
-// screen on the screen where the slideshow is, so the whole class can scan.
+// The QR code shown full screen on the projector. It has no title bar and
+// is hidden (never closed) with a click, the toolbar button or ⌃⌥Q.
 import '@sliderelay/shared/theme.css';
 import './app.css';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import type { Status } from '@sliderelay/shared/protocol';
 
 interface Qr {
@@ -13,7 +12,6 @@ interface Qr {
 }
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
-let projector = false;
 let shownUrl = '';
 
 async function load(): Promise<void> {
@@ -26,35 +24,14 @@ async function load(): Promise<void> {
     // Drop "http://" so the link is shorter to type.
     $('link').textContent = qr.url.replace(/^https?:\/\//, '');
   } catch {
-    getCurrentWindow().close();
+    invoke('hide_qr');
   }
 }
 
-async function setProjector(on: boolean): Promise<void> {
-  projector = on;
-  document.body.classList.toggle('projector', on);
-  $('exit-hint').hidden = !on;
-  await invoke('qr_projector', { on });
-}
+document.addEventListener('click', () => invoke('hide_qr'));
 
-$('projector-btn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  setProjector(true);
-});
-$('close-btn').addEventListener('click', () => getCurrentWindow().close());
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (projector) setProjector(false);
-    else getCurrentWindow().close();
-  }
-});
-document.addEventListener('click', () => {
-  if (projector) setProjector(false);
-});
-
-// The link changes if the network changes; close when the broadcast stops.
+// The link changes if the network changes.
 listen<Status>('status', (e) => {
-  if (e.payload.state === 'idle') getCurrentWindow().close();
-  else load();
+  if (e.payload.state !== 'idle') load();
 });
 load();

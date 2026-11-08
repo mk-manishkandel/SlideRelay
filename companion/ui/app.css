@@ -271,3 +271,86 @@ h2 {
   background: var(--sr-live);
   filter: brightness(1.1);
 }
+
+/* ---------- Setup guide ---------- */
+
+.stack.tight {
+  gap: 6px;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  counter-reset: step;
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+  counter-increment: step;
+}
+
+.step[hidden] {
+  display: none;
+}
+
+.step-mark {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--sr-accent);
+  color: var(--sr-accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.step-mark::before {
+  content: counter(step);
+}
+
+.step.is-done .step-mark {
+  background: var(--sr-ok);
+  border-color: var(--sr-ok);
+  color: #fff;
+}
+
+.step.is-done .step-mark::before {
+  content: '✓';
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.step .step-done,
+.step.is-done .step-todo {
+  display: none;
+}
+
+.step.is-done .step-done {
+  display: block;
+}
+
+footer a {
+  color: var(--sr-accent);
+}
+
+.linklike {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sr-accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

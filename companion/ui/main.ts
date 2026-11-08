@@ -1,22 +1,32 @@
-// Main companion window: shows whether a broadcast is running.
+// Main SlideRelay window: the setup guide (first launch, or from the menu)
+// and the broadcast status. Day to day, presenters use the PowerPoint panel.
 import '@sliderelay/shared/theme.css';
 import './app.css';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import type { Status } from '@sliderelay/shared/protocol';
 
+interface SetupState {
+  platform: 'macos' | 'windows';
+  addinInstalled: boolean;
+  connectionNeeded: boolean;
+  screenPermissionNeeded: boolean;
+  setupDone: boolean;
+}
+
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
+
+// ---------- Broadcast status ----------
 
 function render(status: Status): void {
   const broadcasting = status.state !== 'idle';
-  $('idle').hidden = broadcasting;
   $('broadcasting').hidden = !broadcasting;
   $('live-pill').hidden = status.state !== 'live';
   if (!broadcasting) return;
 
   $('status-line').textContent =
     status.state === 'waiting'
-      ? 'Start your slideshow to go live'
+      ? 'Broadcasting: start your slideshow to go live'
       : status.blanked
         ? 'Blanked'
         : status.paused
@@ -25,50 +35,67 @@ function render(status: Status): void {
   $('viewers').textContent =
     status.viewers === 1 ? '1 viewer connected' : `${status.viewers} viewers connected`;
   $('link').textContent = status.url ? status.url.replace(/^https?:\/\//, '') : '';
-  $('qr-btn').hidden = !status.url;
-
   $('problem-card').hidden = !status.problem;
   $('problem-text').textContent = status.problem ?? '';
-  // The one problem the app can fix for the presenter: macOS Screen Recording.
-  $('fix-btn').hidden = !status.problem?.includes('Screen Recording');
+  $('fix-btn').hidden = status.fix !== 'screen-permission';
 }
 
-async function command(name: string): Promise<void> {
+// ---------- Setup guide ----------
+
+function mark(stepId: string, done: boolean): void {
+  $(stepId).classList.toggle('is-done', done);
+}
+
+async function refreshSetup(): Promise<void> {
+  const s = await invoke<SetupState>('setup_state');
+  document
+    .querySelectorAll<HTMLElement>('[data-mac-only]')
+    .forEach((el) => (el.hidden = s.platform !== 'macos'));
+  mark('step-addin', s.addinInstalled);
+  mark('step-connect', !s.connectionNeeded);
+  mark('step-screen', !s.screenPermissionNeeded);
+  const allDone =
+    s.addinInstalled &&
+    (s.platform !== 'macos' || (!s.connectionNeeded && !s.screenPermissionNeeded));
+  $('setup-title').textContent = allDone ? 'SlideRelay is ready' : 'Set up SlideRelay';
+  $('done-btn').classList.toggle('sr-btn--primary', allDone);
+  $('done-btn').textContent = allDone ? 'Done' : 'Finish later';
+}
+
+async function runStep(button: string, error: string, command: string): Promise<void> {
+  const btn = $(button) as HTMLButtonElement;
+  btn.disabled = true;
+  $(error).hidden = true;
   try {
-    render(await invoke<Status>('run_command', { command: name }));
+    await invoke(command);
   } catch (err) {
-    console.error(err);
-  }
-}
-
-// ---------- One-time connection setup (macOS) ----------
-
-async function refreshSetupCard(): Promise<void> {
-  $('setup-card').hidden = !(await invoke<boolean>('connection_setup_needed'));
-}
-
-$('setup-btn').addEventListener('click', async () => {
-  const button = $('setup-btn') as HTMLButtonElement;
-  button.disabled = true;
-  $('setup-error').hidden = true;
-  try {
-    await invoke('setup_connection');
-    await refreshSetupCard();
-  } catch (err) {
-    $('setup-error').textContent = String(err);
-    $('setup-error').hidden = false;
+    $(error).textContent = String(err);
+    $(error).hidden = false;
   } finally {
-    button.disabled = false;
+    btn.disabled = false;
+    await refreshSetup();
   }
-});
+}
 
-refreshSetupCard();
-
-$('start-btn').addEventListener('click', () => command('start'));
-$('stop-btn').addEventListener('click', () => command('stop'));
-$('qr-btn').addEventListener('click', () => command('show-qr'));
+$('addin-btn').addEventListener('click', () =>
+  runStep('addin-btn', 'addin-error', 'install_addin'),
+);
+$('setup-btn').addEventListener('click', () =>
+  runStep('setup-btn', 'setup-error', 'setup_connection'),
+);
+$('screen-btn').addEventListener('click', () => invoke('open_screen_permission_settings'));
 $('fix-btn').addEventListener('click', () => invoke('open_screen_permission_settings'));
+$('help-btn').addEventListener('click', () => invoke('open_help'));
+$('done-btn').addEventListener('click', () => invoke('finish_setup'));
+$('stop-btn').addEventListener('click', () => invoke('run_command', { command: 'stop' }));
+
+// Permission changes happen in System Settings: check again when we're back.
+window.addEventListener('focus', refreshSetup);
+setInterval(() => {
+  if (document.visibilityState === 'visible') refreshSetup();
+}, 3000);
 
 listen<Status>('status', (e) => render(e.payload));
 invoke<Status>('get_status').then(render);
 invoke<string>('app_version').then((v) => ($('version').textContent = v));
+refreshSetup();

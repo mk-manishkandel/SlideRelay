@@ -14,39 +14,83 @@
         <span id="live-pill" class="live-pill" hidden>Live</span>
       </header>
 
-      <!-- macOS only, until done: PowerPoint for Mac needs a trusted local connection. -->
-      <section id="setup-card" class="sr-card stack" hidden>
-        <h2>One-time step for PowerPoint</h2>
-        <p class="sr-muted">
-          Let PowerPoint connect securely to SlideRelay on this Mac. macOS will ask for your Mac
-          password once.
-        </p>
-        <button id="setup-btn" class="sr-btn sr-btn--primary">Let PowerPoint connect</button>
-        <p id="setup-error" class="error" role="alert" hidden></p>
+      <!-- Setup guide: shown on first launch, and from the menu any time. -->
+      <section id="setup" class="stack">
+        <div class="stack tight">
+          <h1 id="setup-title">Set up SlideRelay</h1>
+          <p class="sr-muted">A few one-time steps. SlideRelay then lives in the menu bar.</p>
+        </div>
+
+        <ol class="steps">
+          <li id="step-addin" class="step">
+            <span class="step-mark" aria-hidden="true"></span>
+            <div class="step-body">
+              <h2>Add SlideRelay to PowerPoint</h2>
+              <p class="sr-muted small step-todo">
+                Puts a <strong>Broadcast</strong> button on PowerPoint's Home tab.
+              </p>
+              <p class="sr-muted small step-done">
+                Done. Quit and reopen PowerPoint, then click <strong>Home → Broadcast</strong>.
+              </p>
+              <button id="addin-btn" class="sr-btn sr-btn--primary step-todo">
+                Add to PowerPoint
+              </button>
+              <p id="addin-error" class="error" role="alert" hidden></p>
+            </div>
+          </li>
+
+          <li id="step-connect" class="step" data-mac-only>
+            <span class="step-mark" aria-hidden="true"></span>
+            <div class="step-body">
+              <h2>Let PowerPoint connect</h2>
+              <p class="sr-muted small step-todo">
+                Lets PowerPoint talk to SlideRelay securely on this Mac. macOS asks for your Mac
+                password once.
+              </p>
+              <p class="sr-muted small step-done">Done.</p>
+              <button id="setup-btn" class="sr-btn sr-btn--primary step-todo">
+                Let PowerPoint connect
+              </button>
+              <p id="setup-error" class="error" role="alert" hidden></p>
+            </div>
+          </li>
+
+          <li id="step-screen" class="step" data-mac-only>
+            <span class="step-mark" aria-hidden="true"></span>
+            <div class="step-body">
+              <h2>Allow Screen Recording</h2>
+              <p class="sr-muted small step-todo">
+                Lets SlideRelay see your slideshow window (and only that window). Switch
+                <strong>SlideRelay</strong> on, then reopen SlideRelay if macOS asks.
+              </p>
+              <p class="sr-muted small step-done">Done.</p>
+              <button id="screen-btn" class="sr-btn sr-btn--primary step-todo">
+                Open System Settings
+              </button>
+            </div>
+          </li>
+        </ol>
+
+        <div class="row">
+          <button id="done-btn" class="sr-btn">Done</button>
+        </div>
       </section>
 
-      <section id="idle" class="stack">
-        <h1>Ready</h1>
-        <p class="sr-muted">
-          In PowerPoint, open <strong>Home → Broadcast</strong> and click
-          <strong>Start Broadcast</strong>.
-        </p>
-        <button id="start-btn" class="sr-btn sr-btn--primary sr-btn--big">Start Broadcast</button>
-      </section>
-
-      <section id="broadcasting" class="stack" hidden>
-        <h1 id="status-line"></h1>
+      <section id="broadcasting" class="stack sr-card" hidden>
+        <h2 id="status-line"></h2>
         <p id="viewers" class="sr-muted">0 viewers connected</p>
         <p id="link" class="link"></p>
-        <div id="problem-card" class="sr-card stack" hidden>
+        <div id="problem-card" class="stack" hidden>
           <p id="problem-text"></p>
           <button id="fix-btn" class="sr-btn sr-btn--primary" hidden>Fix this</button>
         </div>
-        <button id="qr-btn" class="sr-btn">Show QR code</button>
-        <button id="stop-btn" class="sr-btn sr-btn--big">Stop Broadcast</button>
+        <button id="stop-btn" class="sr-btn">Stop Broadcast</button>
       </section>
 
-      <footer class="sr-muted small">Version <span id="version"></span></footer>
+      <footer class="sr-muted small">
+        Version <span id="version"></span> ·
+        <button id="help-btn" class="linklike" type="button">Help</button>
+      </footer>
     </main>
   </body>
 </html>

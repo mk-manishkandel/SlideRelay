@@ -1,0 +1,173 @@
+# Builds the SlideRelay installers and publishes them as a DRAFT GitHub
+# release. A maintainer checks the draft and clicks Publish (see
+# docs/RELEASING.md). Only published releases reach the in-app updater.
+#
+#   Real release: push a tag like v1.0.0 (must match package.json).
+#   Test build:   Actions → Release → Run workflow (dry run = builds only,
+#                 installers attached to the run, no release created).
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build only, don't create a release
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+
+jobs:
+  check:
+    name: Check version and keys
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        name: Read the version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Tag must match package.json
+        if: github.ref_type == 'tag'
+        run: |
+          if [ "${GITHUB_REF_NAME}" != "v${{ steps.version.outputs.version }}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} doesn't match package.json version ${{ steps.version.outputs.version }}. Run: npm run set-version -- <version>"
+            exit 1
+          fi
+      - name: Updater key must be set up for real releases
+        if: env.DRY_RUN != 'true'
+        env:
+          KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$KEY" ] || grep -q '"pubkey": ""' companion/src-tauri/tauri.release.conf.json; then
+            echo "::error::Release keys are not set up. Run scripts/setup-release-keys.sh once (see docs/RELEASING.md)."
+            exit 1
+          fi
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS (Apple silicon + Intel)
+            os: macos-latest
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+            args: --target universal-apple-darwin
+            bundles: companion/src-tauri/target/universal-apple-darwin/release/bundle
+          - name: Windows
+            os: windows-latest
+            rust_targets: ''
+            args: ''
+            bundles: companion/src-tauri/target/release/bundle
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: companion/src-tauri
+          key: release
+      - run: npm ci
+
+      - name: Use release settings (signed updates)
+        if: env.DRY_RUN != 'true'
+        shell: bash
+        run: echo "RELEASE_CONFIG=--config src-tauri/tauri.release.conf.json" >> "$GITHUB_ENV"
+
+      # macOS: sign with the project's own (self-made) certificate when it's
+      # set up. Apple doesn't vouch for it, but it gives every release the
+      # same identity, so Screen Recording permission survives updates.
+      # Without it, the app is signed "ad hoc".
+      - name: macOS signing certificate
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          CERT: ${{ secrets.MACOS_CERTIFICATE }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+        run: |
+          if [ -n "$CERT" ]; then
+            {
+              echo "APPLE_CERTIFICATE=$CERT"
+              echo "APPLE_CERTIFICATE_PASSWORD=$CERT_PASSWORD"
+              echo "APPLE_SIGNING_IDENTITY=$IDENTITY"
+            } >> "$GITHUB_ENV"
+          else
+            echo "No macOS certificate set up: signing ad hoc."
+          fi
+
+      - name: Build installers
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: companion
+          tauriScript: npx tauri
+          args: ${{ matrix.args }} ${{ env.RELEASE_CONFIG }}
+          tagName: ${{ env.DRY_RUN != 'true' && github.ref_name || '' }}
+          releaseName: SlideRelay v__VERSION__
+          releaseBody: |
+            **Install:** [Windows](https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-WINDOWS.md) · [Mac](https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-MAC.md)
+
+            - Windows: `SlideRelay_${{ needs.check.outputs.version }}_x64-setup.exe` (recommended) or the `.msi` for IT deployment.
+            - Mac (Apple silicon and Intel, macOS 13+): `SlideRelay_${{ needs.check.outputs.version }}_universal.dmg`.
+
+            What's new: see the [changelog](https://github.com/mk-manishkandel/SlideRelay/blob/main/CHANGELOG.md).
+            Built from this tag by GitHub Actions. Check your download against `SHA256SUMS.txt`.
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
+
+      # Windows code signing (SignPath Foundation, free for open source) goes
+      # here once the project is approved. See docs/SIGNING.md.
+
+      - name: Keep the test build
+        if: env.DRY_RUN == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SlideRelay-${{ runner.os }}
+          path: |
+            ${{ matrix.bundles }}/dmg/*.dmg
+            ${{ matrix.bundles }}/nsis/*.exe
+            ${{ matrix.bundles }}/msi/*.msi
+          if-no-files-found: error
+
+  checksums:
+    name: Add checksums
+    needs: [check, build]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: SHA-256 of every download
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          mkdir assets && cd assets
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY"
+          rm -f SHA256SUMS.txt
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          gh release upload "$TAG" SHA256SUMS.txt --clobber --repo "$GITHUB_REPOSITORY"

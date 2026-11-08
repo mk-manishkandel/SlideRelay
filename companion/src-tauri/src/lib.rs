@@ -1,6 +1,7 @@
 //! SlideRelay companion app.
 //!
 //! Module map:
+//! - `addin_install` — "Add to PowerPoint" (installs the add-in manifest)
 //! - `session`     — broadcast state machine (pure logic, unit-tested)
 //! - `pairing`     — one-time approval of the PowerPoint add-in (tokens)
 //! - `config`      — presenter settings saved as JSON
@@ -15,8 +16,10 @@
 //! - `network`     — picks the classroom network address
 //! - `qr`          — QR code for the viewer link
 //! - `toolbar`     — floating toolbar, projector QR and keyboard shortcuts
+//! - `updates`     — signed automatic updates (release builds only)
 //! - this file     — Tauri glue: windows, tray icon, logging, startup
 
+pub mod addin_install;
 pub mod broadcaster;
 pub mod capture;
 pub mod config;
@@ -30,6 +33,7 @@ pub mod session;
 pub mod state;
 pub mod stream;
 pub mod toolbar;
+pub mod updates;
 pub mod viewer_server;
 
 use config::{Paths, Settings};
@@ -166,6 +170,75 @@ fn get_qr(state: SharedState) -> Result<Qr, String> {
     Ok(Qr { url, svg })
 }
 
+// ---------- First-run setup guide (main window) ----------
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SetupState {
+    /// "macos" or "windows".
+    platform: &'static str,
+    addin_installed: bool,
+    /// macOS: PowerPoint can't connect until the local certificate is trusted.
+    connection_needed: bool,
+    /// macOS: Screen Recording permission is missing.
+    screen_permission_needed: bool,
+    setup_done: bool,
+}
+
+fn data_dir(app: &AppHandle) -> std::path::PathBuf {
+    app.path()
+        .app_data_dir()
+        .unwrap_or_else(|_| std::env::temp_dir().join("SlideRelay"))
+}
+
+#[tauri::command]
+async fn setup_state(app: AppHandle, state: SharedState<'_>) -> Result<SetupState, String> {
+    let connection_needed = connection_setup_needed(app.clone()).await;
+    Ok(SetupState {
+        platform: if cfg!(target_os = "macos") {
+            "macos"
+        } else {
+            "windows"
+        },
+        addin_installed: addin_install::is_installed(&data_dir(&app)),
+        connection_needed,
+        screen_permission_needed: !capture::has_permission(),
+        setup_done: state.settings().setup_done,
+    })
+}
+
+#[tauri::command]
+async fn install_addin(app: AppHandle) -> Result<(), String> {
+    let dir = data_dir(&app);
+    tauri::async_runtime::spawn_blocking(move || addin_install::install(&dir))
+        .await
+        .map_err(|e| e.to_string())?
+        .map_err(|e| {
+            tracing::warn!("could not add SlideRelay to PowerPoint: {e}");
+            "SlideRelay couldn't add itself to PowerPoint. Follow the manual steps in the install guide."
+                .to_string()
+        })
+}
+
+/// Opens SlideRelay's help (the GitHub README) in the default browser.
+#[tauri::command]
+fn open_help(app: AppHandle) {
+    use tauri_plugin_opener::OpenerExt;
+    let url = "https://github.com/mk-manishkandel/SlideRelay#readme";
+    if let Err(e) = app.opener().open_url(url, None::<&str>) {
+        tracing::warn!("could not open help: {e}");
+    }
+}
+
+/// "Done": remember it and get out of the way (menu bar / tray).
+#[tauri::command]
+fn finish_setup(app: AppHandle, state: SharedState) {
+    state.mark_setup_done();
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+}
+
 /// The toolbar's buttons: run the command, then hand the keyboard back to
 /// PowerPoint so arrow keys keep changing slides.
 #[tauri::command]
@@ -283,7 +356,7 @@ fn init_logging(dir: &std::path::Path) -> Option<tracing_appender::non_blocking:
 }
 
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Open SlideRelay", true, None::<&str>)?;
+    let open = MenuItem::with_id(app, "open", "Setup and status", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit SlideRelay", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &quit])?;
 
@@ -293,7 +366,16 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
         .show_menu_on_left_click(cfg!(target_os = "macos"))
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => show_main_window(app),
-            "quit" => app.exit(0),
+            "quit" => {
+                // Never mid-broadcast: the menu only quits, and installs a
+                // waiting update first.
+                let idle =
+                    app.state::<Arc<AppState>>().status().state == session::BroadcastState::Idle;
+                if idle {
+                    updates::install_if_ready(app);
+                }
+                app.exit(0);
+            }
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
@@ -431,6 +513,7 @@ fn quit_after_stop(app: &AppHandle) {
         // Started again in the meantime? Then stay.
         if state.status().state == session::BroadcastState::Idle {
             tracing::info!("broadcast stopped; quitting as set in Settings");
+            updates::install_if_ready(&app);
             app.exit(0);
         }
     });
@@ -453,11 +536,18 @@ fn handle_links(app: &AppHandle, urls: &[tauri::Url]) {
     }
 }
 
-/// True if the main window must open at startup: only when PowerPoint for
-/// Mac can't reach SlideRelay yet (the one-time "Let PowerPoint connect").
-/// Everything else, like Screen Recording permission, is shown and fixed
-/// from the PowerPoint panel, so SlideRelay otherwise starts silently.
+/// True if the main window must open at startup: the first-run setup
+/// guide hasn't been finished, or (Mac) PowerPoint can't reach SlideRelay
+/// yet. Everything else, like Screen Recording permission, is shown and
+/// fixed from the PowerPoint panel, so SlideRelay otherwise starts silently.
 fn needs_attention(app: &AppHandle) -> bool {
+    let setup_done = app
+        .try_state::<Arc<AppState>>()
+        .map(|s| s.settings().setup_done)
+        .unwrap_or(true);
+    if !setup_done {
+        return true;
+    }
     #[cfg(target_os = "macos")]
     {
         app.try_state::<local_tls::LocalCert>()
@@ -466,14 +556,15 @@ fn needs_attention(app: &AppHandle) -> bool {
     }
     #[cfg(not(target_os = "macos"))]
     {
-        let _ = app;
         false
     }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let app = tauri::Builder::default()
+    let context = tauri::generate_context!();
+    let can_update = updates::configured(context.config());
+    let mut builder = tauri::Builder::default()
         // Must be first: a second launch goes to the running app instead.
         // sliderelay:// links arrive through the deep-link plugin below.
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
@@ -483,6 +574,7 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {
@@ -496,6 +588,11 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec![AUTOSTART_ARG]),
         ))
+        .manage(updates::Updates::new(can_update));
+    if can_update {
+        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    }
+    let app = builder
         .invoke_handler(tauri::generate_handler![
             get_status,
             run_command,
@@ -507,7 +604,11 @@ pub fn run() {
             toolbar_command,
             hide_qr,
             screen_permission_needed,
-            open_screen_permission_settings
+            open_screen_permission_settings,
+            setup_state,
+            install_addin,
+            finish_setup,
+            open_help
         ])
         .setup(|app| {
             let handle = app.handle().clone();
@@ -584,6 +685,7 @@ pub fn run() {
             start_viewer_server(state.clone());
 
             build_tray(&handle)?;
+            updates::check_in_background(&handle);
 
             // sliderelay://start and sliderelay://open, at launch and later.
             {
@@ -616,7 +718,7 @@ pub fn run() {
                 }
             }
         })
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while building SlideRelay");
 
     app.run(|_app, event| {

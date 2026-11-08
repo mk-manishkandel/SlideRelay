@@ -31,11 +31,16 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi", "dmg", "app"],
-    "category": "Education",
+    "targets": [
+      "nsis",
+      "msi",
+      "dmg",
+      "app"
+    ],
+    "category": "Productivity",
     "shortDescription": "Broadcast your slideshow to viewers' phones",
     "longDescription": "SlideRelay streams the live PowerPoint slideshow window to viewers' phones and laptops over the local Wi-Fi. Viewers only need a browser.",
-    "copyright": "© SlideRelay contributors. MIT License.",
+    "copyright": "\u00a9 Manish Kandel and SlideRelay contributors. MIT License.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -44,13 +49,30 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "minimumSystemVersion": "13.0"
+      "minimumSystemVersion": "13.0",
+      "signingIdentity": "-"
+    },
+    "publisher": "SlideRelay contributors",
+    "homepage": "https://github.com/mk-manishkandel/SlideRelay",
+    "license": "MIT",
+    "windows": {
+      "nsis": {
+        "installMode": "both",
+        "installerHooks": "windows/hooks.nsh",
+        "installerIcon": "icons/icon.ico"
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      }
     }
   },
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["sliderelay"]
+        "schemes": [
+          "sliderelay"
+        ]
       }
     }
   }

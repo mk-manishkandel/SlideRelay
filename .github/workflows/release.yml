@@ -54,6 +54,29 @@ jobs:
             echo "::error::Release keys are not set up. Run scripts/setup-release-keys.sh once (see docs/RELEASING.md)."
             exit 1
           fi
+      - name: Create the draft release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Draft release $GITHUB_REF_NAME already exists: the builds will add their files to it."
+            exit 0
+          fi
+          # Quoted: the notes are literal text; the version is filled in after.
+          cat > notes.md <<'NOTES'
+          **Install:** [Windows](https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-WINDOWS.md) · [Mac](https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-MAC.md)
+          
+          - Windows: `SlideRelay___VERSION___x64-setup.exe` (recommended) or the `.msi` for IT deployment.
+          - Mac (Apple silicon and Intel, macOS 13+): `SlideRelay___VERSION___universal.dmg`.
+          
+          What's new: see the [changelog](https://github.com/mk-manishkandel/SlideRelay/blob/main/CHANGELOG.md).
+          Built from this tag by GitHub Actions. Check your download against `SHA256SUMS.txt`.
+          NOTES
+          sed -i "s/__VERSION__/$VERSION/g" notes.md
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+            --title "SlideRelay $GITHUB_REF_NAME" --notes-file notes.md
 
   build:
     name: Build (${{ matrix.name }})
@@ -96,7 +119,9 @@ jobs:
       # macOS: sign with the project's own (self-made) certificate when it's
       # set up. Apple doesn't vouch for it, but it gives every release the
       # same identity, so Screen Recording permission survives updates.
-      # Without it, the app is signed "ad hoc".
+      # Tauri only signs with an identity this Mac trusts, so import it into
+      # a temporary keychain and trust it for code signing on this runner
+      # only. Without the certificate, the app is signed "ad hoc".
       - name: macOS signing certificate
         if: runner.os == 'macOS'
         shell: bash
@@ -105,15 +130,24 @@ jobs:
           CERT_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
         run: |
-          if [ -n "$CERT" ]; then
-            {
-              echo "APPLE_CERTIFICATE=$CERT"
-              echo "APPLE_CERTIFICATE_PASSWORD=$CERT_PASSWORD"
-              echo "APPLE_SIGNING_IDENTITY=$IDENTITY"
-            } >> "$GITHUB_ENV"
-          else
+          if [ -z "$CERT" ]; then
             echo "No macOS certificate set up: signing ad hoc."
+            exit 0
           fi
+          KEYCHAIN="$RUNNER_TEMP/sliderelay-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          echo "$CERT" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 7200 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          security find-certificate -c "$IDENTITY" -p "$KEYCHAIN" > "$RUNNER_TEMP/cert.pem"
+          sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$RUNNER_TEMP/cert.pem"
+          rm -f "$RUNNER_TEMP/cert.p12"
+          security find-identity -v -p codesigning "$KEYCHAIN"
+          echo "APPLE_SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
 
       - name: Build installers
         uses: tauri-apps/tauri-action@v0
@@ -127,14 +161,6 @@ jobs:
           args: ${{ matrix.args }} ${{ env.RELEASE_CONFIG }}
           tagName: ${{ env.DRY_RUN != 'true' && github.ref_name || '' }}
           releaseName: SlideRelay v__VERSION__
-          releaseBody: |
-            **Install:** [Windows](https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-WINDOWS.md) · [Mac](https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-MAC.md)
-
-            - Windows: `SlideRelay_${{ needs.check.outputs.version }}_x64-setup.exe` (recommended) or the `.msi` for IT deployment.
-            - Mac (Apple silicon and Intel, macOS 13+): `SlideRelay_${{ needs.check.outputs.version }}_universal.dmg`.
-
-            What's new: see the [changelog](https://github.com/mk-manishkandel/SlideRelay/blob/main/CHANGELOG.md).
-            Built from this tag by GitHub Actions. Check your download against `SHA256SUMS.txt`.
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true

@@ -59,7 +59,8 @@ function render(status: Status): void {
   $('status-line').textContent = line;
   $('status-line').dataset.tone = status.blanked || status.paused ? 'warn' : 'normal';
 
-  $('viewer-count').textContent = String(status.viewers);
+  $('viewers').textContent =
+    status.viewers === 1 ? '1 student connected' : `${status.viewers} students connected`;
 
   const problem = $('problem');
   problem.textContent = status.problem ?? '';
@@ -151,13 +152,21 @@ function wire(): void {
   $('qr-btn').addEventListener('click', () => run('show-qr'));
 
   // Stop asks for a quick confirmation so a stray click doesn't end class.
+  // The confirmation takes the Stop button's place, so only one is ever shown.
+  const showStopConfirm = (show: boolean) => {
+    $('stop-btn').hidden = show;
+    $('stop-confirm').hidden = !show;
+  };
   $('stop-btn').addEventListener('click', () => {
-    $('stop-confirm').hidden = false;
+    showStopConfirm(true);
     $('stop-cancel').focus();
   });
-  $('stop-cancel').addEventListener('click', () => ($('stop-confirm').hidden = true));
+  $('stop-cancel').addEventListener('click', () => {
+    showStopConfirm(false);
+    $('stop-btn').focus();
+  });
   $('stop-yes').addEventListener('click', () => {
-    $('stop-confirm').hidden = true;
+    showStopConfirm(false);
     run('stop');
   });
 }

@@ -22,7 +22,8 @@ function render(status: Status): void {
         : status.paused
           ? 'Paused'
           : 'Live';
-  $('viewer-count').textContent = String(status.viewers);
+  $('viewers').textContent =
+    status.viewers === 1 ? '1 student connected' : `${status.viewers} students connected`;
   $('link').textContent = status.url ? status.url.replace(/^https?:\/\//, '') : '';
   $('qr-btn').hidden = !status.url;
 

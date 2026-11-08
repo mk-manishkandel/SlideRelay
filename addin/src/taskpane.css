@@ -87,7 +87,7 @@ a.sr-btn {
   color: var(--sr-text-muted);
 }
 
-#viewer-count {
+#viewers {
   font-variant-numeric: tabular-nums;
 }
 

@@ -163,7 +163,7 @@ jobs:
           releaseName: SlideRelay v__VERSION__
           releaseDraft: true
           prerelease: false
-          includeUpdaterJson: true
+          uploadUpdaterJson: true
           updaterJsonPreferNsis: true
 
       # Windows code signing (SignPath Foundation, free for open source) goes

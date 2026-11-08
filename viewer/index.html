@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Pinch-to-zoom stays enabled on purpose. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <title>SlideRelay</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script type="module" src="/src/viewer.ts"></script>
+  </head>
+  <body>
+    <main id="stage">
+      <img id="slide" alt="The teacher's current slide" hidden />
+    </main>
+
+    <!-- Status message (waiting, paused, reconnecting, ended…). -->
+    <div id="message" class="message" role="status" aria-live="polite">
+      <p id="message-title">Connecting…</p>
+      <p id="message-detail" class="detail"></p>
+    </div>
+
+    <!-- Small "Paused" tag shown over the frozen slide. -->
+    <div id="paused-tag" class="tag" hidden>Paused by your teacher</div>
+
+    <!-- PIN prompt (only if the teacher set a PIN). -->
+    <form id="pin-form" class="pin" hidden>
+      <label for="pin-input">Enter the PIN your teacher gave you</label>
+      <input
+        id="pin-input"
+        inputmode="numeric"
+        autocomplete="off"
+        pattern="[0-9]*"
+        maxlength="8"
+        required
+      />
+      <p id="pin-error" class="detail" hidden>That PIN isn't right. Try again.</p>
+      <button type="submit">Join</button>
+    </form>
+
+    <!-- Appears on tap, then fades away. -->
+    <button id="fullscreen-btn" class="fs" type="button" hidden aria-label="Full screen">
+      Full screen
+    </button>
+  </body>
+</html>

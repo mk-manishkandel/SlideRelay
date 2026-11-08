@@ -3,5 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "The student viewer page (built in milestone 2)."
+  "description": "The page students open to watch the slideshow. Built into the companion app.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@sliderelay/shared": "*"
+  }
 }

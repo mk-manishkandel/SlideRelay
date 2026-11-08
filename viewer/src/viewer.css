@@ -1,0 +1,150 @@
+/*
+ * Student viewer. The slide fills the screen on a black background; text
+ * uses the SlideRelay font and accent so it feels like the same product.
+ */
+
+:root {
+  --accent: #3b82f6;
+  --text: #f3f4f6;
+  --muted: #a1a7b3;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-tap-highlight-color: transparent;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#slide {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Blank: students see plain black, nothing else. */
+body.blank #slide,
+body.blank .tag {
+  visibility: hidden;
+}
+
+.message {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  transition: opacity 180ms ease;
+}
+
+.message[hidden] {
+  display: none;
+}
+
+.message p {
+  margin: 0;
+}
+
+#message-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.detail {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.tag {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.7);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pin {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: #000;
+}
+
+.pin[hidden] {
+  display: none;
+}
+
+.pin input {
+  width: 180px;
+  min-height: 52px;
+  border: 1px solid #3a3f4b;
+  border-radius: 10px;
+  background: #111318;
+  color: var(--text);
+  font: inherit;
+  font-size: 26px;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.pin button,
+.fs {
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #0b1220;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fs {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  opacity: 0.92;
+  transition: opacity 180ms ease;
+}
+
+.fs.fading {
+  opacity: 0;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}

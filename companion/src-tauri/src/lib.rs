@@ -399,6 +399,27 @@ fn start_student_server(state: Arc<AppState>) {
     });
 }
 
+/// True if a one-time setup step is still needed (shown in the main window).
+fn needs_attention(app: &AppHandle) -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        if !capture::has_permission() {
+            return true;
+        }
+        if let Some(cert) = app.try_state::<local_tls::LocalCert>() {
+            if !cert.is_trusted() {
+                return true;
+            }
+        }
+        false
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = app;
+        false
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app = tauri::Builder::default()
@@ -490,8 +511,12 @@ pub fn run() {
 
             build_tray(&handle)?;
 
-            let quiet = std::env::args().any(|a| a == AUTOSTART_ARG);
-            if !quiet {
+            // SlideRelay lives in the menu bar / system tray. Only open its
+            // window when the teacher has something to do there (a one-time
+            // setup step); otherwise start quietly, so there's no window to
+            // close (on some Macs closing a window force-quits the app).
+            let autostart = std::env::args().any(|a| a == AUTOSTART_ARG);
+            if !autostart && needs_attention(&handle) {
                 show_main_window(&handle);
             }
             Ok(())

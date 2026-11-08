@@ -87,10 +87,18 @@
           <p id="viewers" class="viewers">0 students connected</p>
           <p id="problem" class="problem" hidden></p>
         </div>
+        <div id="share" class="sr-card share" hidden>
+          <div id="share-qr" class="share-qr"></div>
+          <p class="small sr-muted">Students scan this, or open:</p>
+          <p id="share-link" class="share-link"></p>
+          <div class="share-actions">
+            <button id="copy-btn" class="sr-btn">Copy link</button>
+            <button id="qr-btn" class="sr-btn sr-btn--primary">Show QR to class</button>
+          </div>
+        </div>
         <div class="controls">
           <button id="pause-btn" class="sr-btn"></button>
           <button id="blank-btn" class="sr-btn"></button>
-          <button id="qr-btn" class="sr-btn">Show QR code</button>
         </div>
         <button id="stop-btn" class="sr-btn sr-btn--big stop">Stop Broadcast</button>
         <div id="stop-confirm" class="sr-card confirm" hidden>

@@ -18,6 +18,7 @@ import {
   type ConnectionProblem,
 } from './companion';
 import { reloadIfOutdated } from './self-update';
+import { isStudentLink, qrSvg, shortLink } from './qr';
 
 declare const __BUILD_ID__: string;
 
@@ -51,6 +52,7 @@ function render(status: Status): void {
   const broadcasting = status.state !== 'idle';
   showView(broadcasting ? 'broadcasting' : 'idle');
   $('live-pill').hidden = status.state !== 'live';
+  renderShare(broadcasting ? status.url : null);
   if (!broadcasting) return;
 
   let line: string;
@@ -74,6 +76,73 @@ function render(status: Status): void {
   $('blank-btn').dataset.command = status.blanked ? 'unblank' : 'blank';
 }
 
+// ---------- Student link and QR code ----------
+
+let shownUrl: string | null = null;
+let qrDialog: Office.Dialog | null = null;
+
+/** Draws the link and QR in the panel; only redraws when the link changes. */
+function renderShare(url: string | null): void {
+  const link = isStudentLink(url) ? url : null;
+  if (link === shownUrl) return;
+  shownUrl = link;
+  $('share').hidden = !link;
+  $('share-qr').replaceChildren(...(link ? [qrSvg(link)] : []));
+  $('share-link').textContent = link ? shortLink(link) : '';
+  // The link changed (new network) or the broadcast stopped: the big QR is stale.
+  closeQrDialog();
+}
+
+function closeQrDialog(): void {
+  qrDialog?.close();
+  qrDialog = null;
+}
+
+/**
+ * Opens the big QR code as a PowerPoint dialog window. It belongs to
+ * PowerPoint, not the SlideRelay app, so closing it can't quit the app.
+ */
+function showQrDialog(): void {
+  if (!shownUrl) return;
+  closeQrDialog();
+  const page = new URL('qr.html', location.href);
+  page.searchParams.set('url', shownUrl);
+  Office.context.ui.displayDialogAsync(
+    page.href,
+    { width: 80, height: 85, displayInIframe: false },
+    (result) => {
+      if (result.status !== Office.AsyncResultStatus.Succeeded) {
+        showError('Could not open the QR window. Students can scan the code above.');
+        return;
+      }
+      const dialog = result.value;
+      qrDialog = dialog;
+      dialog.addEventHandler(Office.EventType.DialogMessageReceived, () => closeQrDialog());
+      dialog.addEventHandler(Office.EventType.DialogEventReceived, () => {
+        if (qrDialog === dialog) qrDialog = null;
+      });
+    },
+  );
+}
+
+async function copyLink(): Promise<void> {
+  if (!shownUrl) return;
+  const button = $('copy-btn');
+  try {
+    await navigator.clipboard.writeText(shownUrl);
+  } catch {
+    // Older Office webviews: copy through a hidden text field.
+    const field = document.createElement('textarea');
+    field.value = shownUrl;
+    document.body.append(field);
+    field.select();
+    document.execCommand('copy');
+    field.remove();
+  }
+  button.textContent = 'Copied';
+  setTimeout(() => (button.textContent = 'Copy link'), 1500);
+}
+
 // ---------- Connecting ----------
 
 let unsubscribe: (() => void) | null = null;
@@ -94,6 +163,7 @@ async function connect(): Promise<void> {
   } catch (err) {
     if (err instanceof CompanionError) {
       $('live-pill').hidden = true;
+      renderShare(null);
       showView(err.problem);
       // Keep retrying quietly, except while waiting for the teacher to pair.
       if (err.problem !== 'not-paired') scheduleRetry();
@@ -158,7 +228,8 @@ function wire(): void {
       run(command);
     });
   }
-  $('qr-btn').addEventListener('click', () => run('show-qr'));
+  $('qr-btn').addEventListener('click', showQrDialog);
+  $('copy-btn').addEventListener('click', copyLink);
 
   // Stop asks for a quick confirmation so a stray click doesn't end class.
   // The confirmation takes the Stop button's place, so only one is ever shown.

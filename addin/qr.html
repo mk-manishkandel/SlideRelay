@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scan to watch</title>
+    <!-- Opened by the panel as a PowerPoint dialog, so closing it never
+         touches the SlideRelay app. -->
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <script type="module" src="./src/qr-dialog.ts"></script>
+  </head>
+  <body class="qr-page">
+    <main class="qr-big">
+      <div id="qr" class="qr-big-code"></div>
+      <p id="link" class="qr-big-link"></p>
+      <p class="qr-big-hint">Scan with your phone camera, or type the link.</p>
+      <button id="close-btn" class="sr-btn">Close</button>
+    </main>
+  </body>
+</html>

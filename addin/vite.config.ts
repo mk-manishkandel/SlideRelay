@@ -32,6 +32,7 @@ export default defineConfig({
       input: {
         taskpane: resolve(import.meta.dirname, 'taskpane.html'),
         open: resolve(import.meta.dirname, 'open.html'),
+        qr: resolve(import.meta.dirname, 'qr.html'),
       },
     },
   },

@@ -156,6 +156,25 @@ fn code_ok(ctx: &Ctx, code: &str) -> bool {
         .code_matches(code)
 }
 
+/// Sends "ended" and closes the connection properly. Just dropping the
+/// socket makes Windows reset it, which can discard the "ended" message
+/// before the phone reads it (it would then show "Reconnecting…" forever).
+async fn end(socket: &mut WebSocket) {
+    if !send(socket, state_msg(ViewerMode::Ended)).await {
+        return;
+    }
+    let _ = send(socket, Message::Close(None)).await;
+    // Wait (briefly) for the browser's close reply.
+    let _ = tokio::time::timeout(Duration::from_secs(2), async {
+        while let Some(Ok(msg)) = socket.recv().await {
+            if matches!(msg, Message::Close(_)) {
+                break;
+            }
+        }
+    })
+    .await;
+}
+
 async fn send(socket: &mut WebSocket, msg: Message) -> bool {
     matches!(
         tokio::time::timeout(SEND_TIMEOUT, socket.send(msg)).await,
@@ -202,7 +221,7 @@ async fn check_pin(ctx: &Ctx, socket: &mut WebSocket) -> bool {
 async fn viewer(ctx: Ctx, code: String, mut socket: WebSocket) {
     // Old or wrong link: tell the page the broadcast has ended.
     if !code_ok(&ctx, &code) {
-        let _ = send(&mut socket, state_msg(ViewerMode::Ended)).await;
+        end(&mut socket).await;
         return;
     }
     if !check_pin(&ctx, &mut socket).await {
@@ -241,7 +260,11 @@ async fn stream_to(ctx: &Ctx, code: &str, socket: &mut WebSocket) {
                 let mode = *modes.borrow_and_update();
                 // A quick Stop→Start makes a new code: old links end here.
                 let mode = if code_ok(ctx, code) { mode } else { ViewerMode::Ended };
-                if !send(socket, state_msg(mode)).await || mode == ViewerMode::Ended {
+                if mode == ViewerMode::Ended {
+                    end(socket).await;
+                    return;
+                }
+                if !send(socket, state_msg(mode)).await {
                     return;
                 }
             }

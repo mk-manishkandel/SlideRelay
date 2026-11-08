@@ -156,11 +156,11 @@ footer {
   text-decoration: underline;
 }
 
-/* Done / Finish later: plain text, just above the footer. */
+/* Done / Finish later: plain text, just above the footer, on the left. */
 .done-row {
   margin-top: auto;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .linklike.done-link {

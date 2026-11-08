@@ -156,24 +156,41 @@ footer {
   text-decoration: underline;
 }
 
-/* Done / Finish later: plain text, just above the footer, on the left. */
-.done-row {
-  margin-top: auto;
+/* Setup finished: one line instead of the steps. */
+.ready-line {
   display: flex;
-  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  line-height: 1.5;
 }
 
-.linklike.done-link {
-  font-weight: 600;
-  text-decoration: none;
+.ready-line[hidden],
+.steps[hidden],
+#later-note[hidden] {
+  display: none;
 }
 
-.linklike.done-link:hover {
-  text-decoration: underline;
+.ready-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--sr-ok, #16a34a)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")
+    center / 14px no-repeat;
 }
 
-.done-row + footer {
-  margin-top: 0;
+.ready-line .linklike {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+#later-note {
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* Bottom row: version and updates on the left, Done / Finish later on the right. */
@@ -585,4 +602,8 @@ footer a {
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
+}
+
+#setup[hidden] {
+  display: none;
 }

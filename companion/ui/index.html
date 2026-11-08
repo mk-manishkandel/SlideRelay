@@ -42,7 +42,15 @@
           </p>
         </div>
 
-        <ol class="steps">
+        <p id="setup-ready" class="ready-line" hidden>
+          <span class="ready-check" aria-hidden="true"></span>
+          <span
+            >In PowerPoint, click <strong>Home → Broadcast</strong> to start.
+            <button id="show-steps" class="linklike" type="button">Show setup steps</button></span
+          >
+        </p>
+
+        <ol id="steps" class="steps">
           <li id="step-addin" class="step">
             <span class="step-mark" aria-hidden="true"></span>
             <div class="step-body">
@@ -91,11 +99,12 @@
             </div>
           </li>
         </ol>
+        <p id="later-note" class="sr-muted small">
+          You can close this window and finish later. SlideRelay stays in the menu bar; click its
+          icon and choose <strong>Setup and status</strong> to come back.
+        </p>
       </section>
 
-      <div class="done-row">
-        <button id="done-btn" class="linklike done-link" type="button">Done</button>
-      </div>
       <footer class="foot">
         <div class="foot-info sr-muted small">
           <span

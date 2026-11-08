@@ -147,7 +147,7 @@ body.blank #slide {
   width: 100%;
   min-height: 60px;
   padding: 0 12px;
-  border: 1.5px solid #3a3f4b;
+  border: 2px solid #3a3f4b;
   border-radius: 12px;
   background: #151922;
   color: var(--text);
@@ -159,23 +159,22 @@ body.blank #slide {
   text-indent: 0.35em; /* balances the letter-spacing so digits look centred */
   text-align: center;
   outline: none;
-  transition:
-    border-color 120ms,
-    box-shadow 120ms;
+  transition: border-color 120ms;
 }
 
 .pin input::placeholder {
   color: #4b5262;
 }
 
-.pin input:focus {
+/* One clear stroke on focus: no extra ring or outline around it. */
+.pin input:focus,
+.pin input:focus-visible {
+  outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgb(59 130 246 / 0.25);
 }
 
 .pin input.is-wrong {
   border-color: #f87171;
-  box-shadow: 0 0 0 4px rgb(248 113 113 / 0.2);
 }
 
 .pin input.shake {

@@ -9,6 +9,20 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-11-08
+
+### Changed
+
+- **No more "Finish later":** setup finishes by itself once every step is done, and the steps fold
+  into one line ("In PowerPoint, click Home → Broadcast to start"), with **Show setup steps** to
+  reopen them. Until then, a short note says you can close the window and come back from the menu
+  bar or tray.
+- While broadcasting (with setup finished), the SlideRelay window shows only the broadcast status.
+
+### Fixed
+
+- The viewer PIN field shows a single clean outline when selected (it had two).
+
 ## [1.0.4] - 2026-11-08
 
 ### Changed
@@ -99,7 +113,8 @@ The first public release.
 - Light and dark themes, WCAG AA contrast, plain words throughout.
 - No accounts, no cloud, no telemetry.
 
-[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.4...HEAD
+[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.5...HEAD
+[1.0.5]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.1...v1.0.2

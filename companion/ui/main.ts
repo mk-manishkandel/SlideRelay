@@ -24,8 +24,17 @@ const $ = (id: string) => document.getElementById(id) as HTMLElement;
 
 // ---------- Broadcast status ----------
 
+let broadcasting = false;
+let setupComplete = false;
+
+/** While broadcasting with setup finished, the window shows only the status. */
+function updateSetupVisibility(): void {
+  $('setup').hidden = broadcasting && setupComplete;
+}
+
 function render(status: Status): void {
-  const broadcasting = status.state !== 'idle';
+  broadcasting = status.state !== 'idle';
+  updateSetupVisibility();
   $('broadcasting').hidden = !broadcasting;
   $('live-pill').hidden = status.state !== 'live' || status.paused || status.blanked;
   if (!broadcasting) return;
@@ -55,6 +64,8 @@ function mark(stepId: string, done: boolean): void {
   $(stepId).classList.toggle('is-done', done);
 }
 
+let stepsOpen = false;
+
 async function refreshSetup(): Promise<void> {
   const s = await invoke<SetupState>('setup_state');
   document
@@ -70,8 +81,20 @@ async function refreshSetup(): Promise<void> {
   const allDone =
     s.addinInstalled &&
     (s.platform !== 'macos' || (!s.connectionNeeded && !s.screenPermissionNeeded));
+  setupComplete = allDone;
+  updateSetupVisibility();
   $('setup-title').textContent = allDone ? 'SlideRelay is ready' : 'Set up SlideRelay';
-  $('done-btn').textContent = allDone ? 'Done' : 'Finish later';
+  // Done: fold the steps into one line (they can be reopened).
+  $('setup-intro').hidden = allDone;
+  $('setup-ready').hidden = !allDone;
+  $('steps').hidden = allDone && !stepsOpen;
+  $('later-note').hidden = allDone;
+  $('show-steps').hidden = stepsOpen;
+  if (s.platform === 'windows') {
+    $('later-note').innerHTML =
+      'You can close this window and finish later. SlideRelay stays in the system tray; ' +
+      'right-click its icon and choose <strong>Setup and status</strong> to come back.';
+  }
 }
 
 async function runStep(button: string, error: string, command: string): Promise<void> {
@@ -98,7 +121,10 @@ $('setup-btn').addEventListener('click', () =>
 $('screen-btn').addEventListener('click', () => invoke('open_screen_permission_settings'));
 $('fix-btn').addEventListener('click', () => invoke('open_screen_permission_settings'));
 $('help-btn').addEventListener('click', () => invoke('open_help'));
-$('done-btn').addEventListener('click', () => invoke('finish_setup'));
+$('show-steps').addEventListener('click', () => {
+  stepsOpen = true;
+  refreshSetup();
+});
 
 // ---------- Updates ----------
 

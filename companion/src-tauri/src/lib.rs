@@ -194,15 +194,24 @@ fn data_dir(app: &AppHandle) -> std::path::PathBuf {
 #[tauri::command]
 async fn setup_state(app: AppHandle, state: SharedState<'_>) -> Result<SetupState, String> {
     let connection_needed = connection_setup_needed(app.clone()).await;
+    let addin_installed = addin_install::is_installed(&data_dir(&app));
+    let screen_permission_needed = !capture::has_permission();
+    // Every step done: setup is finished (no "Done" button to click), so the
+    // window won't open by itself at the next start.
+    let all_done = addin_installed
+        && (cfg!(not(target_os = "macos")) || (!connection_needed && !screen_permission_needed));
+    if all_done && !state.settings().setup_done {
+        state.mark_setup_done();
+    }
     Ok(SetupState {
         platform: if cfg!(target_os = "macos") {
             "macos"
         } else {
             "windows"
         },
-        addin_installed: addin_install::is_installed(&data_dir(&app)),
+        addin_installed,
         connection_needed,
-        screen_permission_needed: !capture::has_permission(),
+        screen_permission_needed,
         setup_done: state.settings().setup_done,
     })
 }
@@ -227,15 +236,6 @@ fn open_help(app: AppHandle) {
     let url = "https://github.com/mk-manishkandel/SlideRelay#readme";
     if let Err(e) = app.opener().open_url(url, None::<&str>) {
         tracing::warn!("could not open help: {e}");
-    }
-}
-
-/// "Done": remember it and get out of the way (menu bar / tray).
-#[tauri::command]
-fn finish_setup(app: AppHandle, state: SharedState) {
-    state.mark_setup_done();
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.hide();
     }
 }
 
@@ -636,7 +636,6 @@ pub fn run() {
             open_screen_permission_settings,
             setup_state,
             install_addin,
-            finish_setup,
             open_help
         ])
         .setup(|app| {

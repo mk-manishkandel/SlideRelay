@@ -1,6 +1,6 @@
 {
   "name": "sliderelay",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "description": "Broadcast your live PowerPoint slideshow to viewers' phones over the local Wi-Fi.",
   "license": "MIT",

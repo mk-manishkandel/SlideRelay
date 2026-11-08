@@ -709,6 +709,18 @@ pub fn run() {
             build_tray(&handle)?;
             updates::check_in_background(&handle);
 
+            // After an update: give PowerPoint this version's add-in manifest.
+            {
+                let dir = data_dir(&handle);
+                tauri::async_runtime::spawn_blocking(move || {
+                    match addin_install::refresh_if_outdated(&dir) {
+                        Ok(true) => tracing::info!("updated the PowerPoint add-in manifest"),
+                        Ok(false) => {}
+                        Err(e) => tracing::warn!("could not update the add-in manifest: {e}"),
+                    }
+                });
+            }
+
             // sliderelay://start and sliderelay://open, at launch and later.
             {
                 use tauri_plugin_deep_link::DeepLinkExt;

@@ -69,10 +69,12 @@ the tag (`git tag -d v1.1.0 && git push --delete origin v1.1.0`) and tag again.
 **Actions → Release → Run workflow** (leave _dry run_ ticked). The installers are attached to
 the workflow run as artifacts; no release is created and nothing reaches users.
 
-## Add-in manifest changes
+## Add-in manifest
 
-`addin/manifest.xml` has its own version (`1.0.0.0`) and almost never changes: the add-in's
-code updates through GitHub Pages. If you must change the manifest (name, icons, permissions),
-bump its `<Version>`, and note in the changelog that presenters should click
-**Add to PowerPoint** again in SlideRelay's setup guide. The app ships the manifest it was built
-with.
+`addin/manifest.xml`'s `<Version>` follows the app (`X.Y.Z.0`, set by `npm run set-version`), so
+PowerPoint's add-in info shows the same version as SlideRelay. When SlideRelay starts after an
+update, it replaces PowerPoint's copy of the manifest if it's from an older version (only where
+the add-in is already installed). PowerPoint shows the new version after it restarts.
+
+The add-in's code itself updates through GitHub Pages. Keep the manifest's Id, URLs and ribbon
+stable: see the comment at the top of the file.

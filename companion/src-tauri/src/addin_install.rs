@@ -106,6 +106,50 @@ mod windows_registry {
     }
 }
 
+/// If the add-in is installed from an older SlideRelay, replaces it with this
+/// version's manifest (PowerPoint shows the new version after a restart).
+/// Never installs it where it isn't: that's the presenter's choice.
+pub fn refresh_if_outdated(data_dir: &Path) -> anyhow::Result<bool> {
+    #[cfg(target_os = "macos")]
+    {
+        let _ = data_dir;
+        let Some(dir) = wef_dir() else {
+            return Ok(false);
+        };
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return Ok(false);
+        };
+        let mut refreshed = false;
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if let Ok(text) = std::fs::read_to_string(&path) {
+                if text.contains(ADDIN_ID) && text != MANIFEST {
+                    std::fs::write(&path, MANIFEST)?;
+                    refreshed = true;
+                }
+            }
+        }
+        Ok(refreshed)
+    }
+    #[cfg(windows)]
+    {
+        let path = manifest_path(data_dir);
+        if !is_installed(data_dir) {
+            return Ok(false);
+        }
+        if std::fs::read_to_string(&path).is_ok_and(|text| text == MANIFEST) {
+            return Ok(false);
+        }
+        std::fs::write(&path, MANIFEST)?;
+        Ok(true)
+    }
+    #[cfg(not(any(target_os = "macos", windows)))]
+    {
+        let _ = data_dir;
+        Ok(false)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -114,5 +158,15 @@ mod tests {
     fn built_in_manifest_is_the_production_one() {
         assert!(MANIFEST.contains(&format!("<Id>{ADDIN_ID}</Id>")));
         assert!(MANIFEST.contains("https://mk-manishkandel.github.io/SlideRelay/"));
+    }
+
+    #[test]
+    fn manifest_version_matches_the_app() {
+        let expected = format!("<Version>{}.0</Version>", env!("CARGO_PKG_VERSION"));
+        assert!(
+            MANIFEST.contains(&expected),
+            "run `npm run set-version -- {}`",
+            env!("CARGO_PKG_VERSION")
+        );
     }
 }

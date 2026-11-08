@@ -9,6 +9,11 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 ## [Unreleased]
 
+### Fixed
+
+- PowerPoint's add-in info (the **i** in the SlideRelay panel) now shows the same version as the
+  app. SlideRelay updates PowerPoint's copy of the add-in by itself after each update.
+
 ## [1.0.2] - 2026-11-08
 
 ### Added

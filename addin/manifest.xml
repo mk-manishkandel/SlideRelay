@@ -9,8 +9,9 @@
   remove and re-add the manifest (see docs/RELEASING.md):
     - Id, the ribbon buttons/labels/icons, Permissions, AppDomains,
       SourceLocation or any other URL.
-  <Version> is the MANIFEST version, separate from the app version: bump it
-  only when this file changes (users then need to re-add it).
+  <Version> follows the app version (X.Y.Z.0; set by `npm run set-version`), so
+  PowerPoint's add-in info shows the same version as SlideRelay. The app
+  refreshes PowerPoint's copy of this file when it starts.
 -->
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -18,7 +19,7 @@
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
            xsi:type="TaskPaneApp">
   <Id>7fb1353c-bb37-4bf0-8739-9517d4ca3377</Id>
-  <Version>1.0.0.0</Version>
+  <Version>1.0.2.0</Version>
   <ProviderName>SlideRelay (open source)</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="SlideRelay"/>

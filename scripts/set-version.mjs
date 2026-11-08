@@ -3,8 +3,8 @@
 //
 //   npm run set-version -- 1.2.0
 //
-// The PowerPoint add-in manifest has its own version (1.0.0.0) on purpose:
-// it only changes when the manifest itself changes (see addin/manifest.xml).
+// The PowerPoint add-in manifest gets the same version as X.Y.Z.0, so
+// PowerPoint's add-in info matches the app.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -26,6 +26,15 @@ const cargo = resolve(root, 'companion/src-tauri/Cargo.toml');
 writeFileSync(
   cargo,
   readFileSync(cargo, 'utf8').replace(/^version = "[^"]+"/m, `version = "${version}"`),
+);
+
+const manifest = resolve(root, 'addin/manifest.xml');
+writeFileSync(
+  manifest,
+  readFileSync(manifest, 'utf8').replace(
+    /<Version>[^<]+<\/Version>/,
+    `<Version>${version}.0</Version>`,
+  ),
 );
 
 console.log(`Version set to ${version}. Next: update CHANGELOG.md, then see docs/RELEASING.md.`);

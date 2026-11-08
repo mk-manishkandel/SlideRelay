@@ -54,6 +54,8 @@ Commit that change.
 6. **Wait for [Release](../.github/workflows/release.yml)** (about 20 minutes). It builds:
    - Windows: `SlideRelay_1.1.0_x64-setup.exe` (NSIS) and `SlideRelay_1.1.0_x64_en-US.msi`
    - Mac: `SlideRelay_1.1.0_universal.dmg`
+   - Fixed-name copies for the README's download buttons: `SlideRelay-Windows-setup.exe`,
+     `SlideRelay-Windows.msi`, `SlideRelay-Mac.dmg`
    - Updater files (`*.sig`, `*.tar.gz`, `latest.json`) and `SHA256SUMS.txt`
 7. **Check the draft** in [Releases](https://github.com/mk-manishkandel/SlideRelay/releases):
    install it on a Windows PC and a Mac, and run the [room test checklist](TEST-CHECKLIST.md).

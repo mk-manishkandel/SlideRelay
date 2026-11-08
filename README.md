@@ -16,20 +16,60 @@
   <img alt="Windows and macOS" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-555">
 </p>
 
----
-
 ## Download
 
-| Your computer                                       | Download                                                                                                                  | Guide                                         |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| **Windows 10 or 11**                                | `SlideRelay_x.y.z_x64-setup.exe` from the [latest release](https://github.com/mk-manishkandel/SlideRelay/releases/latest) | [Install on Windows](docs/INSTALL-WINDOWS.md) |
-| **Mac** (macOS 13 or later, Apple silicon or Intel) | `SlideRelay_x.y.z_universal.dmg` from the [latest release](https://github.com/mk-manishkandel/SlideRelay/releases/latest) | [Install on Mac](docs/INSTALL-MAC.md)         |
+<p align="center">
+  <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Windows-setup.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20Windows-2563EB?style=for-the-badge"></a>
+  &nbsp;
+  <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Mac.dmg"><img alt="Download for Mac" src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20Mac-2563EB?style=for-the-badge"></a>
+</p>
 
-Download only from this page: **github.com/mk-manishkandel/SlideRelay/releases**. SlideRelay is
-free and has no other official download site.
+<p align="center">
+  Windows 10 or 11 (64-bit) · macOS 13 or later (Apple silicon and Intel)<br>
+  Free · No account · <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest">All files, checksums and release notes</a>
+</p>
 
-You also need **PowerPoint for Windows or Mac** (the desktop app; Microsoft 365 recommended).
-Viewers need any phone, tablet or laptop with a browser, on the same Wi-Fi.
+You also need the **PowerPoint desktop app** for Windows or Mac (Microsoft 365 recommended).
+Viewers just need a phone, tablet or laptop with a browser, on the same Wi-Fi.
+
+<details>
+<summary><strong>Install on Windows</strong> (about 3 minutes)</summary>
+
+1. Click **Download for Windows**. If your browser says the file _"isn't commonly downloaded"_,
+   keep it: in Edge, **⋯ → Keep → Show more → Keep anyway**; in Chrome, **Keep**. This shows
+   because SlideRelay is new and not yet signed with a paid certificate. It isn't a virus warning.
+2. Open **SlideRelay-Windows-setup.exe**. If you see _"Windows protected your PC"_, click
+   **More info → Run anyway**.
+3. Choose **Anyone who uses this computer** if you can (it also lets phones through the firewall),
+   then **Install**.
+4. In SlideRelay's setup guide, click **Add to PowerPoint**, then **Done**.
+5. Quit and reopen PowerPoint. You'll find **Broadcast** on the **Home** tab.
+
+IT departments: an [MSI package](https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Windows.msi)
+is available. Full guide and troubleshooting: [docs/INSTALL-WINDOWS.md](docs/INSTALL-WINDOWS.md).
+
+</details>
+
+<details>
+<summary><strong>Install on Mac</strong> (about 3 minutes)</summary>
+
+1. Click **Download for Mac**, open **SlideRelay-Mac.dmg**, and drag **SlideRelay** to
+   **Applications**.
+2. Open SlideRelay. The first time, macOS says it can't verify the app (SlideRelay isn't notarized
+   by Apple yet). Click **Done**, then go to **System Settings → Privacy & Security** and click
+   **Open Anyway**. You only do this once.
+3. In SlideRelay's setup guide:
+   - **Add to PowerPoint** (allow access if macOS asks),
+   - **Let PowerPoint connect** (enter your Mac password once),
+   - **Allow Screen Recording** (switch SlideRelay on),
+   - then click **Done**. SlideRelay lives in the menu bar.
+4. Quit PowerPoint (⌘Q) and reopen it. You'll find **Broadcast** on the **Home** tab.
+
+Full guide and troubleshooting: [docs/INSTALL-MAC.md](docs/INSTALL-MAC.md).
+
+</details>
+
+> Download SlideRelay only from this GitHub page. It's free and has no other official download site.
 
 ## How it works
 
@@ -61,8 +101,8 @@ You're installing software that sees your screen, so you should ask. Here is how
   straight from the tagged source code, not on someone's laptop. Each release lists the exact
   build that made it.
 - **Checksums.** Each release has a `SHA256SUMS.txt` file. To check your download:
-  - Windows (PowerShell): `Get-FileHash .\SlideRelay_x.y.z_x64-setup.exe`
-  - Mac (Terminal): `shasum -a 256 ~/Downloads/SlideRelay_x.y.z_universal.dmg`
+  - Windows (PowerShell): `Get-FileHash "$env:USERPROFILE\Downloads\SlideRelay-Windows-setup.exe"`
+  - Mac (Terminal): `shasum -a 256 ~/Downloads/SlideRelay-Mac.dmg`
 
   The result must match the line for that file in `SHA256SUMS.txt`.
 
@@ -78,8 +118,8 @@ You're installing software that sees your screen, so you should ask. Here is how
 from Microsoft and Apple. As a free project, SlideRelay doesn't have them yet; Windows signing
 through the free [SignPath Foundation](https://signpath.org) programme is in progress
 ([docs/SIGNING.md](docs/SIGNING.md)). Until then, Windows shows "Windows protected your PC" and
-macOS says it "could not verify" the app. The install guides show exactly what to click, and
-why it's safe when you downloaded from this page.
+macOS says it "could not verify" the app. The install steps above show exactly what to click,
+and why it's safe when you downloaded from this page.
 
 Found a security problem? Please report it privately: see [SECURITY.md](SECURITY.md).
 

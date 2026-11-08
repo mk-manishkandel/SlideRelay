@@ -181,11 +181,31 @@ jobs:
           if-no-files-found: error
 
   checksums:
-    name: Add checksums
+    name: Add download links and checksums
     needs: [check, build]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
+      # Copies with fixed names, so the README's download buttons
+      # (releases/latest/download/SlideRelay-Windows-setup.exe, ...) always
+      # give the newest version. The versioned files stay for the updater.
+      - name: Fixed-name downloads
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          mkdir links && cd links
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "SlideRelay_${VERSION}_x64-setup.exe" \
+            --pattern "SlideRelay_${VERSION}_x64_en-US.msi" \
+            --pattern "SlideRelay_${VERSION}_universal.dmg"
+          mv "SlideRelay_${VERSION}_x64-setup.exe" SlideRelay-Windows-setup.exe
+          mv "SlideRelay_${VERSION}_x64_en-US.msi" SlideRelay-Windows.msi
+          mv "SlideRelay_${VERSION}_universal.dmg" SlideRelay-Mac.dmg
+          gh release upload "$TAG" SlideRelay-Windows-setup.exe SlideRelay-Windows.msi SlideRelay-Mac.dmg \
+            --clobber --repo "$GITHUB_REPOSITORY"
+
       - name: SHA-256 of every download
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

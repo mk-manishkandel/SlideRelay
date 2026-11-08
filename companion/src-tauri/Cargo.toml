@@ -1,6 +1,6 @@
 [package]
 name = "sliderelay"
-version = "1.0.0"
+version = "1.0.1"
 description = "SlideRelay companion app: captures the PowerPoint slideshow window and streams it to viewers on the local network."
 authors = ["Manish Kandel and SlideRelay contributors"]
 license = "MIT"
@@ -35,7 +35,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 # Milestone 2: streaming to viewers
 bytes = "1"
-jpeg-encoder = "0.7"
+# simd: AVX2 encoding on Intel/AMD PCs (picked at runtime, safe fallback).
+jpeg-encoder = { version = "0.7", features = ["simd"] }
 fast_image_resize = "6"
 if-addrs = "0.15"
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }

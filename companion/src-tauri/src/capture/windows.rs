@@ -102,6 +102,9 @@ impl GraphicsCaptureApiHandler for Handler {
         frame: &mut Frame,
         _control: InternalCaptureControl,
     ) -> Result<(), Self::Error> {
+        if !self.sink.wants_frame() {
+            return Ok(());
+        }
         let buffer = frame.buffer()?;
         let (width, height) = (buffer.width(), buffer.height());
         let bytes = buffer.as_nopadding_buffer(&mut self.packed).to_vec();

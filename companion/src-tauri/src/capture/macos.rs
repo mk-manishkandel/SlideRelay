@@ -99,6 +99,9 @@ impl SCStreamOutputTrait for Output {
         if !matches!(sample.frame_status(), Some(SCFrameStatus::Complete)) {
             return;
         }
+        if !self.sink.wants_frame() {
+            return;
+        }
         let Some(pixels) = sample.pixel_buffer() else {
             return;
         };

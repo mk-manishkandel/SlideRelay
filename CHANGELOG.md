@@ -9,6 +9,18 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-08
+
+### Changed
+
+- **Faster on Windows PCs:** slides are compressed with the processor's fast (AVX2)
+  instructions when available, so new slides reach phones sooner and use less CPU.
+- **Lighter while presenting:** during animations and videos, SlideRelay no longer copies frames
+  it would skip anyway, which saves memory and battery on both Windows and Mac.
+- **One-click downloads:** the project page now has **Download for Windows** and
+  **Download for Mac** buttons that always give the newest version, with install steps right
+  there.
+
 ## [1.0.0] - 2026-11-08
 
 The first public release.
@@ -36,5 +48,6 @@ The first public release.
 - Light and dark themes, WCAG AA contrast, plain words throughout.
 - No accounts, no cloud, no telemetry.
 
-[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/mk-manishkandel/SlideRelay/releases/tag/v1.0.0

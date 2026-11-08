@@ -14,7 +14,7 @@
 use crate::config::Quality;
 use bytes::Bytes;
 use serde::Serialize;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError};
 use std::sync::{Arc, Mutex};
 use tokio::sync::watch;
@@ -157,15 +157,24 @@ impl From<&Quality> for EncodeSettings {
 #[derive(Clone)]
 pub struct FrameSink {
     tx: SyncSender<RawFrame>,
+    /// True while a frame waits for the encoder.
+    queued: Arc<AtomicBool>,
 }
 
 impl FrameSink {
+    /// False while a frame is already waiting for the encoder. Capture
+    /// backends check this first, so they don't copy a full screen of pixels
+    /// (8 MB at 1080p) only for it to be dropped.
+    pub fn wants_frame(&self) -> bool {
+        !self.queued.load(Ordering::Acquire)
+    }
+
     /// Offers a frame. If the encoder is still busy with the previous one,
     /// this frame is dropped (the next one will be newer anyway).
     pub fn offer(&self, frame: RawFrame) {
         match self.tx.try_send(frame) {
-            Ok(()) | Err(TrySendError::Full(_)) => {}
-            Err(TrySendError::Disconnected(_)) => {}
+            Ok(()) => self.queued.store(true, Ordering::Release),
+            Err(TrySendError::Full(_)) | Err(TrySendError::Disconnected(_)) => {}
         }
     }
 }
@@ -174,17 +183,25 @@ impl FrameSink {
 /// clone has been dropped.
 pub fn start_encoder(hub: Arc<Hub>, settings: Arc<Mutex<EncodeSettings>>) -> FrameSink {
     let (tx, rx) = sync_channel::<RawFrame>(1);
+    let queued = Arc::new(AtomicBool::new(false));
+    let encoder_queued = queued.clone();
     std::thread::Builder::new()
         .name("sliderelay-encoder".into())
-        .spawn(move || encoder_loop(rx, hub, settings))
+        .spawn(move || encoder_loop(rx, encoder_queued, hub, settings))
         .expect("could not start encoder thread");
-    FrameSink { tx }
+    FrameSink { tx, queued }
 }
 
-fn encoder_loop(rx: Receiver<RawFrame>, hub: Arc<Hub>, settings: Arc<Mutex<EncodeSettings>>) {
+fn encoder_loop(
+    rx: Receiver<RawFrame>,
+    queued: Arc<AtomicBool>,
+    hub: Arc<Hub>,
+    settings: Arc<Mutex<EncodeSettings>>,
+) {
     let mut last_signature: Vec<u8> = Vec::new();
     let mut last_settings: Option<EncodeSettings> = None;
     while let Ok(frame) = rx.recv() {
+        queued.store(false, Ordering::Release);
         let s = *settings.lock().unwrap_or_else(|e| e.into_inner());
         // Skip frames identical to the previous one (nothing changed on the
         // slide), unless the quality settings changed.
@@ -378,6 +395,22 @@ mod tests {
         // A new broadcast doesn't resurrect the old slide.
         hub.set_mode(ViewerMode::Live);
         assert!(frames.borrow().is_none());
+    }
+
+    #[test]
+    fn sink_refuses_frames_while_one_is_waiting() {
+        let (tx, rx) = sync_channel::<RawFrame>(1);
+        let sink = FrameSink {
+            tx,
+            queued: Arc::new(AtomicBool::new(false)),
+        };
+        assert!(sink.wants_frame());
+        sink.offer(solid(2, 2, [0, 0, 0, 255]));
+        assert!(!sink.wants_frame());
+        sink.offer(solid(2, 2, [9, 9, 9, 255])); // dropped, not blocking
+        let first = rx.recv().unwrap();
+        assert_eq!(first.bgra[0], 0);
+        assert!(rx.try_recv().is_err());
     }
 
     #[test]

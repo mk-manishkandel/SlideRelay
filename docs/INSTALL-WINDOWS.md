@@ -4,14 +4,14 @@ About 5 minutes. You need Windows 10 or 11 (64-bit) and the PowerPoint desktop a
 
 ## 1. Download
 
-1. Open the [latest release](https://github.com/mk-manishkandel/SlideRelay/releases/latest).
-2. Under **Assets**, click **`SlideRelay_x.y.z_x64-setup.exe`** (x.y.z is the version number).
+Click **[Download for Windows](https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Windows-setup.exe)**.
+It always gives you the newest version (`SlideRelay-Windows-setup.exe`).
 
 > Only download SlideRelay from **github.com/mk-manishkandel/SlideRelay/releases**.
 > To check the file, see [Check your download](#check-your-download-optional) below.
 
-The `.msi` file is for IT departments who deploy software to many PCs. Most people want the
-`setup.exe`.
+The [MSI package](https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Windows.msi)
+is for IT departments who deploy software to many PCs. Most people want the `setup.exe`.
 
 ### "This file isn't commonly downloaded" / "could harm your device"
 
@@ -32,11 +32,11 @@ Microsoft at https://www.microsoft.com/wdsi/filesubmission (choose **Incorrect d
 
 ## 2. Install
 
-1. Double-click the downloaded `SlideRelay_x.y.z_x64-setup.exe`.
+1. Double-click the downloaded `SlideRelay-Windows-setup.exe`.
 2. **"Windows protected your PC"** may appear (Microsoft Defender SmartScreen). It appears
    because SlideRelay isn't signed with a paid certificate yet, and new downloads are rare
    (see [SIGNING.md](SIGNING.md)). Click **More info**, check that it says
-   **App: SlideRelay_x.y.z_x64-setup.exe**, then click **Run anyway**.
+   **App: SlideRelay-Windows-setup.exe**, then click **Run anyway**.
 3. Choose who to install for:
    - **Anyone who uses this computer (all users)** _(recommended if you can)_: Windows asks for
      an administrator. The installer then also lets viewers through Windows Firewall, so
@@ -101,7 +101,7 @@ PowerPoint panel updates by itself.
 In the release's **Assets**, open `SHA256SUMS.txt`. Then in PowerShell:
 
 ```powershell
-Get-FileHash "$env:USERPROFILE\Downloads\SlideRelay_x.y.z_x64-setup.exe"
+Get-FileHash "$env:USERPROFILE\Downloads\SlideRelay-Windows-setup.exe"
 ```
 
 The **Hash** must match the line for that file (letter case doesn't matter).

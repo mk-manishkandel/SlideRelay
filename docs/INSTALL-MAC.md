@@ -5,9 +5,9 @@ desktop app.
 
 ## 1. Download
 
-1. Open the [latest release](https://github.com/mk-manishkandel/SlideRelay/releases/latest).
-2. Under **Assets**, click **`SlideRelay_x.y.z_universal.dmg`** (x.y.z is the version number).
-   One download works on every Mac.
+Click **[Download for Mac](https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Mac.dmg)**.
+It always gives you the newest version (`SlideRelay-Mac.dmg`), and one download works on every
+Mac (Apple silicon and Intel).
 
 > Only download SlideRelay from **github.com/mk-manishkandel/SlideRelay/releases**.
 > To check the file, see [Check your download](#check-your-download-optional) below.
@@ -83,7 +83,7 @@ PowerPoint panel updates by itself. Screen Recording permission is kept across u
 In the release's **Assets**, open `SHA256SUMS.txt`. Then in **Terminal**:
 
 ```sh
-shasum -a 256 ~/Downloads/SlideRelay_x.y.z_universal.dmg
+shasum -a 256 ~/Downloads/SlideRelay-Mac.dmg
 ```
 
 The long code must match the line for that file.

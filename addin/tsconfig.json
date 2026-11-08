@@ -1,0 +1,7 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["office-js", "vite/client"]
+  },
+  "include": ["src", "../shared/*.ts", "vite.config.ts"]
+}

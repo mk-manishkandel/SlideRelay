@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SlideRelay add-in manifest (add-in only XML manifest).
+
+  Teachers sideload this file once. After that, every update to the add-in's
+  web files on GitHub Pages reaches them automatically.
+
+  KEEP THIS FILE STABLE. Changing any of the following forces every teacher to
+  remove and re-add the manifest (see docs/RELEASING.md):
+    - Id, the ribbon buttons/labels/icons, Permissions, AppDomains,
+      SourceLocation or any other URL.
+  <Version> is the MANIFEST version, separate from the app version: bump it
+  only when this file changes (users then need to re-add it).
+-->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+  <Id>7fb1353c-bb37-4bf0-8739-9517d4ca3377</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>SlideRelay (open source)</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="SlideRelay"/>
+  <Description DefaultValue="Broadcast your live slideshow to students' phones over the classroom Wi-Fi."/>
+  <IconUrl DefaultValue="https://mk-manishkandel.github.io/SlideRelay/assets/logo-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://mk-manishkandel.github.io/SlideRelay/assets/logo-64.png"/>
+  <SupportUrl DefaultValue="https://github.com/mk-manishkandel/SlideRelay#readme"/>
+  <AppDomains>
+    <AppDomain>https://github.com</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Presentation"/>
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://mk-manishkandel.github.io/SlideRelay/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>Restricted</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Presentation">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="SlideRelay.Group">
+                <Label resid="Group.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16"/>
+                  <bt:Image size="32" resid="Icon.32"/>
+                  <bt:Image size="80" resid="Icon.80"/>
+                </Icon>
+                <Control xsi:type="Button" id="SlideRelay.Open">
+                  <Label resid="Button.Label"/>
+                  <Supertip>
+                    <Title resid="Button.Label"/>
+                    <Description resid="Button.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16"/>
+                    <bt:Image size="32" resid="Icon.32"/>
+                    <bt:Image size="80" resid="Icon.80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>SlideRelay.Taskpane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="https://mk-manishkandel.github.io/SlideRelay/assets/logo-16.png"/>
+        <bt:Image id="Icon.32" DefaultValue="https://mk-manishkandel.github.io/SlideRelay/assets/logo-32.png"/>
+        <bt:Image id="Icon.80" DefaultValue="https://mk-manishkandel.github.io/SlideRelay/assets/logo-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://github.com/mk-manishkandel/SlideRelay#readme"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://mk-manishkandel.github.io/SlideRelay/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title" DefaultValue="SlideRelay is ready"/>
+        <bt:String id="Group.Label" DefaultValue="SlideRelay"/>
+        <bt:String id="Button.Label" DefaultValue="Broadcast"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Click Broadcast on the Home tab to share your slideshow with students' phones."/>
+        <bt:String id="Button.Tooltip" DefaultValue="Show your live slideshow on students' phones over the classroom Wi-Fi."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

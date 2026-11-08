@@ -1,0 +1,129 @@
+/* Task pane layout. Colors, buttons and fonts come from shared/theme.css. */
+
+body {
+  padding: 16px;
+  min-height: 100vh;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.live-pill {
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--sr-live);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .live-pill {
+    color: #111;
+  }
+}
+
+main section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+main section[hidden] {
+  display: none;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+.small {
+  font-size: 13px;
+}
+
+.center {
+  text-align: center;
+}
+
+a {
+  color: var(--sr-accent);
+}
+
+a.sr-btn {
+  text-decoration: none;
+}
+
+.status-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-line {
+  font-weight: 600;
+}
+
+.status-line[data-tone='warn'] {
+  color: var(--sr-warn);
+}
+
+.viewers {
+  color: var(--sr-text-muted);
+}
+
+#viewer-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.problem {
+  color: var(--sr-warn);
+  font-size: 13px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.controls #qr-btn {
+  grid-column: span 2;
+}
+
+.stop {
+  color: var(--sr-live);
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.error {
+  margin-top: 16px;
+  color: var(--sr-live);
+  font-size: 13px;
+}

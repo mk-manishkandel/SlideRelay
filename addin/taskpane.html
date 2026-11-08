@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SlideRelay</title>
+    <!-- Office.js must come from Microsoft's CDN (Office add-in requirement). -->
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <script type="module" src="./src/taskpane.ts"></script>
+  </head>
+  <body>
+    <header class="top">
+      <img src="./assets/logo.svg" alt="" width="24" height="24" />
+      <span class="brand">SlideRelay</span>
+      <span id="live-pill" class="live-pill" hidden>Live</span>
+    </header>
+
+    <!-- Exactly one of these <section>s is visible at a time. -->
+    <main id="app" aria-live="polite">
+      <section data-view="checking">
+        <p class="sr-muted">Connecting to the SlideRelay app…</p>
+      </section>
+
+      <section data-view="not-running" hidden>
+        <h1>The SlideRelay app is not running</h1>
+        <p class="sr-muted">Open it, and this panel will connect by itself.</p>
+        <a class="sr-btn sr-btn--primary sr-btn--big" href="sliderelay://open">Open SlideRelay</a>
+        <p class="small">
+          Don't have it yet?
+          <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest" target="_blank"
+            >Download SlideRelay</a
+          >
+        </p>
+      </section>
+
+      <section data-view="companion-outdated" hidden>
+        <h1>Please update the SlideRelay app</h1>
+        <p class="sr-muted">
+          Your SlideRelay app is older than this panel. Open the app and click Update, or download
+          the latest version.
+        </p>
+        <a
+          class="sr-btn sr-btn--primary sr-btn--big"
+          href="https://github.com/mk-manishkandel/SlideRelay/releases/latest"
+          target="_blank"
+          >Download the latest version</a
+        >
+      </section>
+
+      <section data-view="addin-outdated" hidden>
+        <h1>Please reload this panel</h1>
+        <p class="sr-muted">The SlideRelay app was updated. Close this panel and open it again.</p>
+      </section>
+
+      <section data-view="not-paired" hidden>
+        <h1>Connect to the SlideRelay app</h1>
+        <p class="sr-muted">You only need to do this once on this computer.</p>
+        <button id="pair-btn" class="sr-btn sr-btn--primary sr-btn--big">Connect</button>
+        <p id="pair-hint" class="small" hidden>
+          Click <strong>Allow</strong> in the SlideRelay window that just opened.
+        </p>
+      </section>
+
+      <section data-view="idle" hidden>
+        <button id="start-btn" class="sr-btn sr-btn--primary sr-btn--big">Start Broadcast</button>
+        <p class="sr-muted center">Students will scan a QR code to watch on their phones.</p>
+      </section>
+
+      <section data-view="broadcasting" hidden>
+        <div class="sr-card status-card">
+          <p id="status-line" class="status-line"></p>
+          <p class="viewers"><span id="viewer-count">0</span> students connected</p>
+          <p id="problem" class="problem" hidden></p>
+        </div>
+        <div class="controls">
+          <button id="pause-btn" class="sr-btn"></button>
+          <button id="blank-btn" class="sr-btn"></button>
+          <button id="qr-btn" class="sr-btn">Show QR code</button>
+        </div>
+        <button id="stop-btn" class="sr-btn sr-btn--big stop">Stop Broadcast</button>
+        <div id="stop-confirm" class="sr-card confirm" hidden>
+          <p>Stop the broadcast? Students will be disconnected.</p>
+          <div class="confirm-actions">
+            <button id="stop-cancel" class="sr-btn">Keep going</button>
+            <button id="stop-yes" class="sr-btn sr-btn--primary">Stop</button>
+          </div>
+        </div>
+      </section>
+
+      <p id="error" class="error" role="alert" hidden></p>
+    </main>
+  </body>
+</html>

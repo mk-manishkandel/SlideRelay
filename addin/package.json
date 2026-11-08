@@ -1,0 +1,21 @@
+{
+  "name": "@sliderelay/addin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config vite.config.ts",
+    "build": "vite build --config vite.config.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "validate": "office-addin-manifest validate manifest.xml"
+  },
+  "dependencies": {
+    "@sliderelay/shared": "*"
+  },
+  "devDependencies": {
+    "@types/office-js": "^1.0.616",
+    "office-addin-dev-certs": "^2.0.0",
+    "office-addin-manifest": "^3.0.0"
+  }
+}

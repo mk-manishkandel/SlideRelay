@@ -144,9 +144,11 @@ function wire(): void {
     }
   });
 
-  // PowerPoint's panel can't launch apps itself. The button is a normal web
-  // link (opens in the teacher's browser) to a page that hands off to the
-  // app's sliderelay:// link. Meanwhile keep retrying so we connect quickly.
+  // The button is a target=_blank link to sliderelay://open: Office hands
+  // new-window links to the operating system, which launches the app that
+  // registered the sliderelay:// scheme. (A plain link inside the panel is
+  // ignored.) "Didn't open?" falls back to a page in the teacher's browser.
+  // Meanwhile keep retrying so the panel connects as soon as the app is up.
   $('open-app-btn').addEventListener('click', () => scheduleRetry());
 
   $('start-btn').addEventListener('click', () => run('start'));

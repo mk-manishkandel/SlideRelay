@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scan to join</title>
+    <script type="module" src="./qr.ts"></script>
+  </head>
+  <body class="qr-body">
+    <main class="qr-window">
+      <div id="qr" class="qr-code" role="img" aria-label="QR code for the student link"></div>
+      <p id="link" class="qr-link"></p>
+      <p class="qr-hint">Scan to view the slides on your phone</p>
+      <div class="row qr-actions">
+        <button id="projector-btn" class="sr-btn sr-btn--primary">Show on projector</button>
+        <button id="close-btn" class="sr-btn">Close</button>
+      </div>
+      <p id="exit-hint" class="sr-muted small" hidden>Press Esc or click anywhere to close</p>
+    </main>
+  </body>
+</html>

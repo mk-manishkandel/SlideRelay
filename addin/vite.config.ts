@@ -16,7 +16,12 @@ const devHttps = existsSync(resolve(devCertDir, 'localhost.crt'))
     }
   : undefined;
 
+// A unique id for every build. The panel compares it with version.json
+// (always fetched fresh) and reloads itself if Office cached an old copy.
+const BUILD_ID = process.env.GITHUB_SHA?.slice(0, 12) ?? `dev-${Date.now()}`;
+
 export default defineConfig({
+  define: { __BUILD_ID__: JSON.stringify(BUILD_ID) },
   // Relative paths, so the same build works under /SlideRelay/ and at / in dev.
   base: './',
   server: { port: 3000, strictPort: true, https: devHttps },
@@ -54,6 +59,10 @@ export default defineConfig({
         copyFileSync(
           resolve(import.meta.dirname, 'manifest.xml'),
           resolve(import.meta.dirname, 'dist/manifest.xml'),
+        );
+        writeFileSync(
+          resolve(import.meta.dirname, 'dist/version.json'),
+          JSON.stringify({ build: BUILD_ID }),
         );
       },
     },

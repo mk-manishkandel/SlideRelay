@@ -8,15 +8,27 @@
 //! - `control_api` — localhost HTTP/WebSocket API used by the add-in
 //! - `local_tls`   — macOS only: HTTPS for the add-in (PowerPoint for Mac refuses
 //!   plain http to 127.0.0.1)
+//! - `capture`     — finds the slideshow window (never Presenter View), captures it
+//! - `broadcaster` — keeps capture in sync with the session
+//! - `stream`      — encodes frames once and shares them with all students
+//! - `student_server` — the web page + live stream students open
+//! - `network`     — picks the classroom network address
+//! - `qr`          — QR code for the student link
 //! - this file     — Tauri glue: windows, tray icon, logging, startup
 
+pub mod broadcaster;
+pub mod capture;
 pub mod config;
 pub mod control_api;
 #[cfg(target_os = "macos")]
 pub mod local_tls;
+pub mod network;
 pub mod pairing;
+pub mod qr;
 pub mod session;
 pub mod state;
+pub mod stream;
+pub mod student_server;
 
 use config::{Paths, Settings};
 use pairing::Pairing;
@@ -63,9 +75,7 @@ impl Ui for TauriUi {
     }
 
     fn show_qr(&self) {
-        // The dedicated QR window arrives in milestone 2; for now the main
-        // window shows the link.
-        show_main_window(&self.app);
+        show_qr_window(&self.app);
     }
 
     fn broadcast_changed(&self, broadcasting: bool) {
@@ -73,6 +83,24 @@ impl Ui for TauriUi {
             "broadcast {}",
             if broadcasting { "started" } else { "stopped" }
         );
+    }
+}
+
+fn show_qr_window(app: &AppHandle) {
+    if let Some(existing) = app.get_webview_window("qr") {
+        let _ = existing.show();
+        let _ = existing.set_focus();
+        return;
+    }
+    let result = WebviewWindowBuilder::new(app, "qr", WebviewUrl::App("qr.html".into()))
+        .title("Scan to join")
+        .inner_size(520.0, 640.0)
+        .min_inner_size(360.0, 460.0)
+        .center()
+        .focused(true)
+        .build();
+    if let Err(e) = result {
+        tracing::error!("could not open QR window: {e}");
     }
 }
 
@@ -109,6 +137,83 @@ fn answer_pairing(state: SharedState, id: String, allow: bool) -> Result<(), Str
         .unwrap_or_else(|e| e.into_inner())
         .answer(&id, allow)
         .map_err(|_| "This request has expired. Click Connect in PowerPoint again.".to_string())
+}
+
+#[derive(serde::Serialize)]
+struct Qr {
+    url: String,
+    svg: String,
+}
+
+/// The student link and its QR code (only while broadcasting).
+#[tauri::command]
+fn get_qr(state: SharedState) -> Result<Qr, String> {
+    let url = state
+        .status()
+        .url
+        .ok_or("No broadcast is running, or no network was found.")?;
+    let svg = qr::svg_for(&url).map_err(|e| e.to_string())?;
+    Ok(Qr { url, svg })
+}
+
+/// Puts the QR window full screen on the screen showing the slideshow
+/// (or back to a normal window).
+#[tauri::command]
+fn qr_projector(app: AppHandle, state: SharedState, on: bool) -> Result<(), String> {
+    let window = app
+        .get_webview_window("qr")
+        .ok_or("QR window is not open.")?;
+    if !on {
+        let _ = window.set_fullscreen(false);
+        let _ = window.set_always_on_top(false);
+        return Ok(());
+    }
+    let bounds = *state
+        .slideshow_bounds
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    if let (Some((x, y, w, h)), Ok(monitors)) = (bounds, window.available_monitors()) {
+        let (cx, cy) = (x + w / 2.0, y + h / 2.0);
+        let target = monitors.into_iter().find(|m| {
+            // macOS reports window bounds in points, Windows in pixels.
+            let scale = if cfg!(target_os = "macos") {
+                m.scale_factor()
+            } else {
+                1.0
+            };
+            let (mx, my) = (m.position().x as f64 / scale, m.position().y as f64 / scale);
+            let (mw, mh) = (
+                m.size().width as f64 / scale,
+                m.size().height as f64 / scale,
+            );
+            cx >= mx && cx < mx + mw && cy >= my && cy < my + mh
+        });
+        if let Some(m) = target {
+            let _ = window.set_position(*m.position());
+        }
+    }
+    window.set_always_on_top(true).map_err(|e| e.to_string())?;
+    window.set_fullscreen(true).map_err(|e| e.to_string())?;
+    let _ = window.set_focus();
+    Ok(())
+}
+
+/// macOS: is Screen Recording permission still missing?
+#[tauri::command]
+fn screen_permission_needed() -> bool {
+    !capture::has_permission()
+}
+
+/// Opens the right System Settings page (macOS) for Screen Recording.
+#[tauri::command]
+fn open_screen_permission_settings() {
+    capture::request_permission();
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("/usr/bin/open")
+            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+            .spawn();
+    }
 }
 
 #[tauri::command]
@@ -236,6 +341,64 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+/// Starts the students' web server and keeps the link's network address
+/// up to date (e.g. if the laptop moves to another Wi-Fi).
+fn start_student_server(state: Arc<AppState>) {
+    tauri::async_runtime::spawn(async move {
+        let preferred = state
+            .settings
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .port;
+        let listener = match student_server::bind(preferred).await {
+            Ok(l) => l,
+            Err(e) => {
+                tracing::error!("student server could not start: {e}");
+                state.update(|s| {
+                    s.set_problem(Some(
+                        "SlideRelay couldn't open a network port. Restart SlideRelay and try again."
+                            .into(),
+                    ))
+                });
+                return;
+            }
+        };
+        let port = listener.local_addr().map(|a| a.port()).unwrap_or(80);
+
+        let refresh_state = state.clone();
+        tauri::async_runtime::spawn(async move {
+            loop {
+                let preferred_ip = refresh_state
+                    .settings
+                    .read()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .lan_ip
+                    .clone();
+                let ip = network::choose_lan_ip(&network::adapters(), preferred_ip.as_deref());
+                let url = ip.map(|ip| network::base_url(ip, port));
+                let changed = {
+                    let mut base = refresh_state
+                        .base_url
+                        .write()
+                        .unwrap_or_else(|e| e.into_inner());
+                    let changed = *base != url;
+                    *base = url.clone();
+                    changed
+                };
+                if changed {
+                    tracing::info!("student link base: {url:?}");
+                    refresh_state.update(|_| ());
+                }
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+            }
+        });
+
+        if let Err(e) = student_server::serve(listener, state).await {
+            tracing::error!("student server stopped: {e}");
+        }
+    });
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app = tauri::Builder::default()
@@ -251,7 +414,11 @@ pub fn run() {
             answer_pairing,
             app_version,
             connection_setup_needed,
-            setup_connection
+            setup_connection,
+            get_qr,
+            qr_projector,
+            screen_permission_needed,
+            open_screen_permission_settings
         ])
         .setup(|app| {
             let handle = app.handle().clone();
@@ -316,6 +483,10 @@ pub fn run() {
                 }
                 app.manage(cert);
             }
+
+            // Capture + streaming.
+            broadcaster::start(state.clone());
+            start_student_server(state.clone());
 
             build_tray(&handle)?;
 

@@ -87,3 +87,61 @@ h2 {
   color: var(--sr-live);
   font-size: 13px;
 }
+
+/* ---------- QR window ---------- */
+
+.qr-body {
+  background: #ffffff;
+  color: #111827;
+}
+
+.qr-window {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+}
+
+.qr-code {
+  width: min(70vw, 60vh);
+  aspect-ratio: 1;
+}
+
+.qr-code svg {
+  width: 100%;
+  height: 100%;
+}
+
+.qr-link {
+  margin: 0;
+  font-size: clamp(22px, 5vw, 64px);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.qr-hint {
+  margin: 0;
+  font-size: clamp(15px, 2.4vw, 32px);
+  color: #374151;
+}
+
+/* Full screen on the projector: bigger, no buttons. */
+.projector .qr-code {
+  width: min(60vw, 66vh);
+}
+
+.projector .qr-actions {
+  display: none;
+}
+
+.qr-body .sr-btn:not(.sr-btn--primary) {
+  background: #f3f4f6;
+  color: #111827;
+  border-color: #d1d5db;
+}

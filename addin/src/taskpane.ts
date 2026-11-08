@@ -17,6 +17,7 @@ import {
   subscribe,
   type ConnectionProblem,
 } from './companion';
+import { reloadIfOutdated } from './self-update';
 
 type View = 'checking' | ConnectionProblem | 'idle' | 'broadcasting';
 
@@ -163,6 +164,8 @@ function wire(): void {
 
 // Office.onReady also fires when the page is opened in a normal browser
 // (handy for development), so the pane works either way.
+reloadIfOutdated();
+
 Office.onReady(() => {
   // On a Mac the add-in needs the app's one-time secure-connection step;
   // until it's done the app looks "not running", so point the way.

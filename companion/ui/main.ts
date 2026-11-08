@@ -23,7 +23,13 @@ function render(status: Status): void {
           ? 'Paused'
           : 'Live';
   $('viewer-count').textContent = String(status.viewers);
-  $('link').textContent = status.url ?? '';
+  $('link').textContent = status.url ? status.url.replace(/^https?:\/\//, '') : '';
+  $('qr-btn').hidden = !status.url;
+
+  $('problem-card').hidden = !status.problem;
+  $('problem-text').textContent = status.problem ?? '';
+  // The one problem the app can fix for the teacher: macOS Screen Recording.
+  $('fix-btn').hidden = !status.problem?.includes('Screen Recording');
 }
 
 async function command(name: string): Promise<void> {
@@ -59,6 +65,8 @@ refreshSetupCard();
 
 $('start-btn').addEventListener('click', () => command('start'));
 $('stop-btn').addEventListener('click', () => command('stop'));
+$('qr-btn').addEventListener('click', () => command('show-qr'));
+$('fix-btn').addEventListener('click', () => invoke('open_screen_permission_settings'));
 
 listen<Status>('status', (e) => render(e.payload));
 invoke<Status>('get_status').then(render);

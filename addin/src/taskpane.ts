@@ -19,6 +19,8 @@ import {
 } from './companion';
 import { reloadIfOutdated } from './self-update';
 
+declare const __BUILD_ID__: string;
+
 type View = 'checking' | ConnectionProblem | 'idle' | 'broadcasting';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -142,19 +144,10 @@ function wire(): void {
     }
   });
 
-  // PowerPoint's panel can't launch apps itself, so open a tiny page in the
-  // teacher's browser that hands off to the app's sliderelay:// link. The
-  // panel keeps retrying and connects as soon as the app is up.
-  $('open-app-btn').addEventListener('click', () => {
-    const url = new URL('./open.html', location.href).href;
-    try {
-      if (Office.context?.ui?.openBrowserWindow) Office.context.ui.openBrowserWindow(url);
-      else window.open(url, '_blank');
-    } catch {
-      window.open(url, '_blank');
-    }
-    scheduleRetry();
-  });
+  // PowerPoint's panel can't launch apps itself. The button is a normal web
+  // link (opens in the teacher's browser) to a page that hands off to the
+  // app's sliderelay:// link. Meanwhile keep retrying so we connect quickly.
+  $('open-app-btn').addEventListener('click', () => scheduleRetry());
 
   $('start-btn').addEventListener('click', () => run('start'));
   for (const id of ['pause-btn', 'blank-btn']) {
@@ -188,6 +181,7 @@ function wire(): void {
 // Office.onReady also fires when the page is opened in a normal browser
 // (handy for development), so the pane works either way.
 reloadIfOutdated();
+$('build-id').textContent = __BUILD_ID__.slice(0, 7);
 
 Office.onReady(() => {
   // On a Mac the add-in needs the app's one-time secure-connection step;

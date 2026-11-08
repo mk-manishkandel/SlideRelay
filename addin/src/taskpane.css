@@ -127,3 +127,10 @@ a.sr-btn {
   color: var(--sr-live);
   font-size: 13px;
 }
+
+.build {
+  margin-top: 32px;
+  font-size: 11px;
+  color: var(--sr-text-muted);
+  text-align: center;
+}

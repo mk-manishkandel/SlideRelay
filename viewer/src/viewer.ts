@@ -134,16 +134,36 @@ function connect(): void {
   };
 }
 
+const pinJoin = $<HTMLButtonElement>('pin-join');
+
 function askPin(wrong: boolean): void {
   hideMessage();
   pinForm.hidden = false;
   $('pin-error').hidden = !wrong;
   pinInput.value = '';
+  pinJoin.disabled = true;
+  pinInput.classList.toggle('is-wrong', wrong);
+  if (wrong) {
+    // Restart the shake animation each time.
+    pinInput.classList.remove('shake');
+    void pinInput.offsetWidth;
+    pinInput.classList.add('shake');
+  }
   pinInput.focus();
 }
 
+// Digits only; Join turns on at 4 digits.
+pinInput.addEventListener('input', () => {
+  const digits = pinInput.value.replace(/\D/g, '').slice(0, 8);
+  if (digits !== pinInput.value) pinInput.value = digits;
+  pinJoin.disabled = digits.length < 4;
+  pinInput.classList.remove('is-wrong');
+  $('pin-error').hidden = true;
+});
+
 pinForm.addEventListener('submit', (e) => {
   e.preventDefault();
+  if (pinInput.value.length < 4) return;
   socket?.send(JSON.stringify({ type: 'pin', pin: pinInput.value.trim() }));
   pinForm.hidden = true;
   showMessage('Joining…');

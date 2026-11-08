@@ -99,29 +99,134 @@ body.blank #slide {
   position: fixed;
   inset: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  background: #000;
+  padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse at top, #10172a 0%, #000 65%);
 }
 
 .pin[hidden] {
   display: none;
 }
 
+.pin-card {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 22px 24px;
+  border: 1px solid #262b36;
+  border-radius: 18px;
+  background: #0e1117;
+  text-align: center;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.5);
+}
+
+.pin-logo {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 2px;
+}
+
+.pin-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.pin-sub {
+  margin: -6px 0 6px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
 .pin input {
-  width: 180px;
-  min-height: 52px;
-  border: 1px solid #3a3f4b;
-  border-radius: 10px;
-  background: #111318;
+  width: 100%;
+  min-height: 60px;
+  padding: 0 12px;
+  border: 1.5px solid #3a3f4b;
+  border-radius: 12px;
+  background: #151922;
   color: var(--text);
   font: inherit;
-  font-size: 26px;
-  letter-spacing: 0.2em;
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em; /* balances the letter-spacing so digits look centred */
   text-align: center;
+  outline: none;
+  transition:
+    border-color 120ms,
+    box-shadow 120ms;
+}
+
+.pin input::placeholder {
+  color: #4b5262;
+}
+
+.pin input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgb(59 130 246 / 0.25);
+}
+
+.pin input.is-wrong {
+  border-color: #f87171;
+  box-shadow: 0 0 0 4px rgb(248 113 113 / 0.2);
+}
+
+.pin input.shake {
+  animation: pin-shake 360ms ease;
+}
+
+@keyframes pin-shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pin input.shake {
+    animation: none;
+  }
+}
+
+.pin-error {
+  margin: -4px 0 0;
+  color: #fca5a5;
+  font-size: 14px;
+}
+
+.pin-error[hidden] {
+  display: none;
+}
+
+.pin button {
+  width: 100%;
+  min-height: 52px;
+  font-size: 17px;
+}
+
+.pin button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .pin button,

@@ -9,6 +9,21 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-11-08
+
+### Changed
+
+- **New PIN screen for viewers:** a clear card with the SlideRelay logo, a large digit field
+  with the number keypad, and a **Join** button that turns on once 4 digits are typed. A wrong
+  PIN turns the field red with a short shake.
+- **Done / Finish later** sits on the left, just above the footer.
+
+### Fixed
+
+- **Toolbar easier to grab:** you can drag it by the grip, the status pill, the viewer count or
+  any gap between buttons (before, pressing on an icon did nothing). The grip is larger and
+  lights up on hover.
+
 ## [1.0.3] - 2026-11-08
 
 ### Changed
@@ -84,7 +99,8 @@ The first public release.
 - Light and dark themes, WCAG AA contrast, plain words throughout.
 - No accounts, no cloud, no telemetry.
 
-[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.0...v1.0.1

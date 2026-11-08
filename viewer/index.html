@@ -25,18 +25,28 @@
     <div id="mode-tag" class="tag" hidden></div>
 
     <!-- PIN prompt (only if the presenter set a PIN). -->
-    <form id="pin-form" class="pin" hidden>
-      <label for="pin-input">Enter the PIN the presenter gave you</label>
-      <input
-        id="pin-input"
-        inputmode="numeric"
-        autocomplete="off"
-        pattern="[0-9]*"
-        maxlength="8"
-        required
-      />
-      <p id="pin-error" class="detail" hidden>That PIN isn't right. Try again.</p>
-      <button type="submit">Join</button>
+    <form id="pin-form" class="pin" hidden novalidate>
+      <div class="pin-card">
+        <img class="pin-logo" src="/favicon.svg" alt="" width="44" height="44" />
+        <h1 class="pin-title">Enter the PIN</h1>
+        <p class="pin-sub">The presenter will tell you the 4–8 digit PIN for this broadcast.</p>
+        <label class="visually-hidden" for="pin-input">PIN</label>
+        <input
+          id="pin-input"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          pattern="[0-9]*"
+          maxlength="8"
+          placeholder="••••"
+          aria-describedby="pin-error"
+          required
+        />
+        <p id="pin-error" class="pin-error" role="alert" hidden>
+          That PIN isn't right. Check it and try again.
+        </p>
+        <button id="pin-join" type="submit" disabled>Join</button>
+      </div>
     </form>
 
     <!-- Appears on tap, then fades away. -->

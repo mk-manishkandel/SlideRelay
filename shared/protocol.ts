@@ -13,7 +13,17 @@ export const API_VERSION = 1;
 
 /** The companion listens only on the loopback interface, on this port. */
 export const CONTROL_PORT = 47615;
-export const CONTROL_BASE = `http://127.0.0.1:${CONTROL_PORT}`;
+/** macOS only: the same API over HTTPS with a locally trusted certificate. */
+export const CONTROL_TLS_PORT = 47616;
+
+/**
+ * Addresses to try, in order. Windows (WebView2) accepts plain http to
+ * 127.0.0.1; PowerPoint for Mac blocks it, so it uses the HTTPS one.
+ */
+export const CONTROL_BASES = [
+  `http://127.0.0.1:${CONTROL_PORT}`,
+  `https://localhost:${CONTROL_TLS_PORT}`,
+] as const;
 
 /** GET /v1/hello — public, no token needed. */
 export interface Hello {

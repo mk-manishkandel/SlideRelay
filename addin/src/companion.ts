@@ -9,7 +9,7 @@
  */
 import {
   API_VERSION,
-  CONTROL_BASE,
+  CONTROL_BASES,
   type Command,
   type Hello,
   type PairPoll,
@@ -54,19 +54,41 @@ function saveToken(token: string | null): void {
 
 // ---------- HTTP helpers ----------
 
-async function request<T>(path: string, init: RequestInit = {}, timeoutMs = 3000): Promise<T> {
+/** The address that worked last time (null = try them all). */
+let workingBase: string | null = null;
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let response: Response;
   try {
-    const headers = new Headers(init.headers);
-    const token = loadToken();
-    if (token) headers.set('Authorization', `Bearer ${token}`);
-    response = await fetch(CONTROL_BASE + path, { ...init, headers, signal: controller.signal });
-  } catch {
-    throw new CompanionError('not-running');
+    return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
+  }
+}
+
+async function request<T>(path: string, init: RequestInit = {}, timeoutMs = 3000): Promise<T> {
+  const headers = new Headers(init.headers);
+  const token = loadToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  // Try the address that worked before first, then the others.
+  const bases = workingBase
+    ? [workingBase, ...CONTROL_BASES.filter((b) => b !== workingBase)]
+    : [...CONTROL_BASES];
+  let response: Response | null = null;
+  for (const base of bases) {
+    try {
+      response = await fetchWithTimeout(base + path, { ...init, headers }, timeoutMs);
+      workingBase = base;
+      break;
+    } catch {
+      // Blocked or nothing listening: try the next address.
+    }
+  }
+  if (!response) {
+    workingBase = null;
+    throw new CompanionError('not-running');
   }
   if (response.status === 401) {
     saveToken(null);
@@ -124,7 +146,8 @@ export function sendCommand(command: Command): Promise<Status> {
  */
 export function subscribe(onStatus: (s: Status) => void, onClose: () => void): () => void {
   const token = loadToken();
-  const ws = new WebSocket(CONTROL_BASE.replace('http', 'ws') + '/v1/events');
+  const base = workingBase ?? CONTROL_BASES[0];
+  const ws = new WebSocket(base.replace(/^http/, 'ws') + '/v1/events');
   ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token }));
   ws.onmessage = (event) => {
     try {

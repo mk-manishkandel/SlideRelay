@@ -34,6 +34,29 @@ async function command(name: string): Promise<void> {
   }
 }
 
+// ---------- One-time connection setup (macOS) ----------
+
+async function refreshSetupCard(): Promise<void> {
+  $('setup-card').hidden = !(await invoke<boolean>('connection_setup_needed'));
+}
+
+$('setup-btn').addEventListener('click', async () => {
+  const button = $('setup-btn') as HTMLButtonElement;
+  button.disabled = true;
+  $('setup-error').hidden = true;
+  try {
+    await invoke('setup_connection');
+    await refreshSetupCard();
+  } catch (err) {
+    $('setup-error').textContent = String(err);
+    $('setup-error').hidden = false;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+refreshSetupCard();
+
 $('start-btn').addEventListener('click', () => command('start'));
 $('stop-btn').addEventListener('click', () => command('stop'));
 

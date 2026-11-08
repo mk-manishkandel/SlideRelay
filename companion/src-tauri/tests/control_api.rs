@@ -15,7 +15,7 @@ const ORIGIN: &str = "https://mk-manishkandel.github.io";
 
 fn app() -> (axum::Router, Arc<AppState>) {
     let state = AppState::new(Settings::default(), Pairing::load(None), Arc::new(NoUi));
-    (router(state.clone(), CONTROL_PORT), state)
+    (router(state.clone(), &[CONTROL_PORT]), state)
 }
 
 fn req(method: &str, path: &str) -> axum::http::request::Builder {
@@ -201,4 +201,36 @@ async fn cors_preflight_allows_private_network() {
     let h = resp.headers();
     assert_eq!(h["access-control-allow-origin"], ORIGIN);
     assert_eq!(h["access-control-allow-private-network"], "true");
+}
+
+#[tokio::test]
+async fn http2_style_authority_is_accepted() {
+    // HTTP/2 has no Host header; the host is in the URI instead.
+    let (app, _) = app();
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri(format!("https://localhost:{CONTROL_PORT}/v1/hello"))
+                .header("origin", ORIGIN)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn foreign_http2_authority_is_rejected() {
+    let (app, _) = app();
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri(format!("https://evil.example:{CONTROL_PORT}/v1/hello"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::MISDIRECTED_REQUEST);
 }

@@ -83,6 +83,8 @@ impl Settings {
 pub struct Paths {
     pub settings: PathBuf,
     pub tokens: PathBuf,
+    /// macOS: local HTTPS certificate for the add-in connection.
+    pub tls: PathBuf,
     pub logs: PathBuf,
 }
 

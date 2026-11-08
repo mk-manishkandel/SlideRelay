@@ -6,10 +6,14 @@
 //! - `config`      — teacher settings saved as JSON
 //! - `state`       — shared app state + commands (Start/Stop/Pause/...)
 //! - `control_api` — localhost HTTP/WebSocket API used by the add-in
+//! - `local_tls`   — macOS only: HTTPS for the add-in (PowerPoint for Mac refuses
+//!   plain http to 127.0.0.1)
 //! - this file     — Tauri glue: windows, tray icon, logging, startup
 
 pub mod config;
 pub mod control_api;
+#[cfg(target_os = "macos")]
+pub mod local_tls;
 pub mod pairing;
 pub mod session;
 pub mod state;
@@ -112,6 +116,47 @@ fn app_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
+/// True when the one-time "let PowerPoint connect" step is still needed
+/// (macOS only; always false on Windows).
+#[tauri::command]
+async fn connection_setup_needed(app: AppHandle) -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        let cert = app.state::<local_tls::LocalCert>().inner().clone();
+        tauri::async_runtime::spawn_blocking(move || !cert.is_trusted())
+            .await
+            .unwrap_or(true)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = app;
+        false
+    }
+}
+
+/// Runs the one-time step: macOS asks for the teacher's password to trust
+/// SlideRelay's local certificate.
+#[tauri::command]
+async fn setup_connection(app: AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let cert = app.state::<local_tls::LocalCert>().inner().clone();
+        tauri::async_runtime::spawn_blocking(move || cert.trust())
+            .await
+            .map_err(|e| e.to_string())?
+            .map_err(|e| {
+                tracing::warn!("trusting local certificate failed: {e}");
+                "macOS didn't allow it. Click the button again and enter your Mac password."
+                    .to_string()
+            })
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = app;
+        Ok(())
+    }
+}
+
 // ---------- Startup ----------
 
 fn app_paths(app: &AppHandle) -> anyhow::Result<Paths> {
@@ -119,6 +164,7 @@ fn app_paths(app: &AppHandle) -> anyhow::Result<Paths> {
     Ok(Paths {
         settings: config.join("settings.json"),
         tokens: config.join("paired-addins.json"),
+        tls: config.join("tls"),
         logs: app.path().app_log_dir()?,
     })
 }
@@ -203,7 +249,9 @@ pub fn run() {
             get_status,
             run_command,
             answer_pairing,
-            app_version
+            app_version,
+            connection_setup_needed,
+            setup_connection
         ])
         .setup(|app| {
             let handle = app.handle().clone();
@@ -225,7 +273,7 @@ pub fn run() {
             });
             let state = AppState::new(settings, pairing, ui);
             app.manage(state.clone());
-            app.manage(paths);
+            app.manage(paths.clone());
 
             // Forward every status change to SlideRelay's own windows.
             let mut rx = state.subscribe();
@@ -238,12 +286,36 @@ pub fn run() {
             });
 
             // Start the localhost API for the add-in.
-            let api_state = state.clone();
+            #[cfg(target_os = "macos")]
+            let ports = [control_api::CONTROL_PORT, local_tls::TLS_PORT];
+            #[cfg(not(target_os = "macos"))]
+            let ports = [control_api::CONTROL_PORT];
+            let api = control_api::router(state.clone(), &ports);
+
+            let http_api = api.clone();
             tauri::async_runtime::spawn(async move {
-                if let Err(e) = control_api::serve(api_state).await {
+                if let Err(e) = control_api::serve(http_api).await {
                     tracing::error!("control API failed to start: {e}");
                 }
             });
+
+            // macOS: the same API over HTTPS for PowerPoint for Mac.
+            #[cfg(target_os = "macos")]
+            {
+                let cert = local_tls::LocalCert::in_dir(&paths.tls);
+                match cert.ensure() {
+                    Ok(()) => {
+                        let https_cert = cert.clone();
+                        tauri::async_runtime::spawn(async move {
+                            if let Err(e) = local_tls::serve(&https_cert, api).await {
+                                tracing::error!("HTTPS control API failed to start: {e}");
+                            }
+                        });
+                    }
+                    Err(e) => tracing::error!("could not create local certificate: {e}"),
+                }
+                app.manage(cert);
+            }
 
             build_tray(&handle)?;
 

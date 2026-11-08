@@ -77,3 +77,13 @@ p {
 footer {
   margin-top: auto;
 }
+
+h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.error {
+  color: var(--sr-live);
+  font-size: 13px;
+}

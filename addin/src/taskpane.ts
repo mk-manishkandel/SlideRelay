@@ -164,6 +164,9 @@ function wire(): void {
 // Office.onReady also fires when the page is opened in a normal browser
 // (handy for development), so the pane works either way.
 Office.onReady(() => {
+  // On a Mac the add-in needs the app's one-time secure-connection step;
+  // until it's done the app looks "not running", so point the way.
+  $('mac-hint').hidden = Office.context?.diagnostics?.platform !== Office.PlatformType.Mac;
   wire();
   connect();
 });

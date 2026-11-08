@@ -14,6 +14,17 @@
         <span id="live-pill" class="live-pill" hidden>Live</span>
       </header>
 
+      <!-- macOS only, until done: PowerPoint for Mac needs a trusted local connection. -->
+      <section id="setup-card" class="sr-card stack" hidden>
+        <h2>One-time step for PowerPoint</h2>
+        <p class="sr-muted">
+          Let PowerPoint connect securely to SlideRelay on this Mac. macOS will ask for your Mac
+          password once.
+        </p>
+        <button id="setup-btn" class="sr-btn sr-btn--primary">Let PowerPoint connect</button>
+        <p id="setup-error" class="error" role="alert" hidden></p>
+      </section>
+
       <section id="idle" class="stack">
         <h1>Ready</h1>
         <p class="sr-muted">

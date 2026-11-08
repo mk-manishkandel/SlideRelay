@@ -39,12 +39,16 @@ pub const ALLOWED_ORIGINS: &[&str] = &[
 #[derive(Clone)]
 struct Ctx {
     state: Arc<AppState>,
-    port: u16,
+    /// Ports we serve on; used for the Host-header check.
+    ports: Arc<Vec<u16>>,
 }
 
-/// Builds the API. `port` is used for the Host-header check.
-pub fn router(state: Arc<AppState>, port: u16) -> Router {
-    let ctx = Ctx { state, port };
+/// Builds the API. `ports` are the ports it is served on (Host-header check).
+pub fn router(state: Arc<AppState>, ports: &[u16]) -> Router {
+    let ctx = Ctx {
+        state,
+        ports: Arc::new(ports.to_vec()),
+    };
 
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list(
@@ -71,11 +75,26 @@ pub fn router(state: Arc<AppState>, port: u16) -> Router {
 
 /// Rejects requests with a foreign Host header or a foreign Origin.
 async fn guard(State(ctx): State<Ctx>, req: Request, next: Next) -> Response {
-    let host_ok = req
+    tracing::debug!(
+        "control API {} {} origin={:?}",
+        req.method(),
+        req.uri().path(),
+        req.headers().get(header::ORIGIN)
+    );
+    // HTTP/1.1 sends a Host header; HTTP/2 (used over HTTPS) sends the
+    // host as the request URI's authority instead.
+    let host = req
         .headers()
         .get(header::HOST)
         .and_then(|h| h.to_str().ok())
-        .map(|h| h == format!("127.0.0.1:{}", ctx.port) || h == format!("localhost:{}", ctx.port))
+        .map(str::to_owned)
+        .or_else(|| req.uri().authority().map(|a| a.to_string()));
+    let host_ok = host
+        .map(|h| {
+            ctx.ports
+                .iter()
+                .any(|p| h == format!("127.0.0.1:{p}") || h == format!("localhost:{p}"))
+        })
         .unwrap_or(false);
     if !host_ok {
         return StatusCode::MISDIRECTED_REQUEST.into_response();
@@ -248,9 +267,9 @@ async fn events_loop(ctx: Ctx, mut socket: WebSocket) {
 
 /// Starts the API on 127.0.0.1:47615. Fails if another program holds the
 /// port (usually a second SlideRelay — single-instance normally prevents it).
-pub async fn serve(state: Arc<AppState>) -> anyhow::Result<()> {
+pub async fn serve(app: Router) -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(("127.0.0.1", CONTROL_PORT)).await?;
     tracing::info!("control API listening on 127.0.0.1:{CONTROL_PORT}");
-    axum::serve(listener, router(state, CONTROL_PORT)).await?;
+    axum::serve(listener, app).await?;
     Ok(())
 }

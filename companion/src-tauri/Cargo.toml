@@ -34,6 +34,15 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 
+# macOS only: PowerPoint for Mac's add-in panel refuses plain http://127.0.0.1,
+# so on Mac the control API is also served over HTTPS with a local
+# certificate that the teacher trusts once (see src/local_tls.rs).
+[target.'cfg(target_os = "macos")'.dependencies]
+rcgen = "0.14"
+time = "0.3"
+axum-server = { version = "0.9", features = ["tls-rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
 tower = { version = "0.5", features = ["util"] }

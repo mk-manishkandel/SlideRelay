@@ -67,10 +67,10 @@ jobs:
           # Quoted: the notes are literal text; the version is filled in after.
           cat > notes.md <<'NOTES'
           **Install:** [Windows](https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-WINDOWS.md) · [Mac](https://github.com/mk-manishkandel/SlideRelay/blob/main/docs/INSTALL-MAC.md)
-          
+
           - Windows: `SlideRelay___VERSION___x64-setup.exe` (recommended) or the `.msi` for IT deployment.
           - Mac (Apple silicon and Intel, macOS 13+): `SlideRelay___VERSION___universal.dmg`.
-          
+
           What's new: see the [changelog](https://github.com/mk-manishkandel/SlideRelay/blob/main/CHANGELOG.md).
           Built from this tag by GitHub Actions. Check your download against `SHA256SUMS.txt`.
           NOTES

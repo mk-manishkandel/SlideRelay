@@ -38,7 +38,7 @@ function render(s: Status): void {
   if (s.paused) setButton('pause', 'play', 'Resume', `Resume (${key('P')})`);
   else setButton('pause', 'pause', 'Pause', `Pause: students keep seeing this slide (${key('P')})`);
   if (s.blanked) setButton('blank', 'unblank', 'Show', `Show slides again (${key('B')})`);
-  else setButton('blank', 'blank', 'Blank', `Blank: students see a black screen (${key('B')})`);
+  else setButton('blank', 'blank', 'Blank', `Blank: hide the slide from students (${key('B')})`);
 }
 
 async function send(command: string): Promise<void> {

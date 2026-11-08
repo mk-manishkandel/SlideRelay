@@ -85,7 +85,7 @@ function render(status: Status): void {
 
   let line: string;
   if (status.state === 'waiting') line = 'Start your slideshow to go live.';
-  else if (status.blanked) line = 'Blanked — students see a black screen.';
+  else if (status.blanked) line = 'Blanked — students see "Screen hidden by your teacher".';
   else if (status.paused) line = 'Paused — students see a frozen slide.';
   else line = 'Live — students see your slideshow.';
   $('status-line').textContent = line;

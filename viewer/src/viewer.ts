@@ -44,7 +44,14 @@ function hideMessage(): void {
 function applyMode(next: Mode): void {
   mode = next;
   document.body.classList.toggle('blank', next === 'blank');
-  $('paused-tag').hidden = next !== 'paused';
+  const tag = $('mode-tag');
+  tag.textContent =
+    next === 'paused'
+      ? 'Paused by your teacher'
+      : next === 'blank'
+        ? 'Screen hidden by your teacher'
+        : '';
+  tag.hidden = next !== 'paused' && next !== 'blank';
 
   switch (next) {
     case 'waiting':
@@ -58,7 +65,7 @@ function applyMode(next: Mode): void {
       else showMessage('Waiting for the presenter…');
       break;
     case 'blank':
-      hideMessage(); // plain black screen
+      hideMessage(); // black screen with the "hidden by your teacher" tag
       break;
     case 'ended':
       ended = true;

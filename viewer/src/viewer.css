@@ -40,9 +40,8 @@ body {
   -webkit-user-select: none;
 }
 
-/* Blank: students see plain black, nothing else. */
-body.blank #slide,
-body.blank .tag {
+/* Blank: the slide is hidden; only the "hidden by your teacher" tag shows. */
+body.blank #slide {
   visibility: hidden;
 }
 

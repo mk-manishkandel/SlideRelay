@@ -19,14 +19,15 @@
 ## Download
 
 <p align="center">
-  <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Windows-setup.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20Windows-2563EB?style=for-the-badge"></a>
+  <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Windows-setup.exe"><img alt="Download for Windows" src="https://img.shields.io/github/v/release/mk-manishkandel/SlideRelay?style=for-the-badge&color=2563EB&labelColor=1E40AF&label=%E2%AC%87%20Download%20for%20Windows"></a>
   &nbsp;
-  <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Mac.dmg"><img alt="Download for Mac" src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20Mac-2563EB?style=for-the-badge"></a>
+  <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest/download/SlideRelay-Mac.dmg"><img alt="Download for Mac" src="https://img.shields.io/github/v/release/mk-manishkandel/SlideRelay?style=for-the-badge&color=2563EB&labelColor=1E40AF&label=%E2%AC%87%20Download%20for%20Mac"></a>
 </p>
 
 <p align="center">
   Windows 10 or 11 (64-bit) · macOS 13 or later (Apple silicon and Intel)<br>
-  Free · No account · <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest">All files, checksums and release notes</a>
+  Always the newest version · Free · No account<br>
+  <a href="https://github.com/mk-manishkandel/SlideRelay/releases/latest">All files, checksums and release notes</a>
 </p>
 
 You also need the **PowerPoint desktop app** for Windows or Mac (Microsoft 365 recommended).

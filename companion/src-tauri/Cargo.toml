@@ -33,6 +33,13 @@ anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
+# Milestone 2: streaming to students
+bytes = "1"
+jpeg-encoder = "0.7"
+fast_image_resize = "6"
+if-addrs = "0.15"
+qrcode = { version = "0.14", default-features = false, features = ["svg"] }
+rust-embed = { version = "8", features = ["mime-guess"] }
 
 # macOS only: PowerPoint for Mac's add-in panel refuses plain http://127.0.0.1,
 # so on Mac the control API is also served over HTTPS with a local
@@ -40,13 +47,20 @@ tracing-appender = "0.2"
 [target.'cfg(target_os = "macos")'.dependencies]
 rcgen = "0.14"
 time = "0.3"
+screencapturekit = "11"
 axum-server = { version = "0.9", features = ["tls-rustls-no-provider"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-capture = "2"
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Gdi"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
 tower = { version = "0.5", features = ["util"] }
 http-body-util = "0.1"
+tokio-tungstenite = "0.28"
+futures-util = "0.3"
 
 [profile.release]
 # Small, fast binaries.

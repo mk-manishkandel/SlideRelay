@@ -1,0 +1,6 @@
+dist/
+node_modules/
+companion/src-tauri/
+assets/icons/
+package-lock.json
+SlideRelay-build-prompt.md

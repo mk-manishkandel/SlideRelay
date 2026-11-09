@@ -542,6 +542,18 @@ fn quit_after_stop(app: &AppHandle) {
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
         tokio::time::sleep(std::time::Duration::from_millis(2500)).await;
+        // An update still checking or downloading: let it finish first (the
+        // app is invisible meanwhile), or it starts from zero next time and
+        // may never finish on a slow network.
+        let started = std::time::Instant::now();
+        while updates::status(&app).is_busy()
+            && started.elapsed() < std::time::Duration::from_secs(20 * 60)
+        {
+            if state.status().state != session::BroadcastState::Idle {
+                return;
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+        }
         // Started again in the meantime? Then stay.
         if state.status().state == session::BroadcastState::Idle {
             tracing::info!("broadcast stopped; quitting as set in Settings");

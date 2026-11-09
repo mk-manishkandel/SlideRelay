@@ -16,6 +16,9 @@ Write entries for presenters, in plain words. Each release's notes link here.
   checks now give up after 90 seconds instead of waiting forever, and a failed check is retried
   after 30 minutes instead of 6 hours. This matters on networks that are slow to reach GitHub's
   download servers.
+- **Updates no longer get lost when SlideRelay quits after a broadcast.** If an update is still
+  downloading when you stop, SlideRelay quietly finishes it (and installs it) before quitting,
+  instead of throwing it away and starting again next time.
 
 ## [1.0.5] - 2026-11-08
 

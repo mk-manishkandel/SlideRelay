@@ -8,6 +8,9 @@ import type { Status } from '@sliderelay/shared/protocol';
 
 type UpdateCheck =
   | { state: 'unavailable' }
+  | { state: 'idle' }
+  | { state: 'checking' }
+  | { state: 'downloading'; version: string; percent: number | null }
   | { state: 'up-to-date' }
   | { state: 'ready'; version: string }
   | { state: 'failed'; message: string };
@@ -131,29 +134,63 @@ $('show-steps').addEventListener('click', () => {
 function showUpdate(result: UpdateCheck): void {
   const status = $('update-status');
   $('install-btn').hidden = result.state !== 'ready';
-  status.textContent =
-    result.state === 'up-to-date'
-      ? 'You have the newest version.'
-      : result.state === 'ready'
-        ? `Version ${result.version} is ready. It also installs by itself when SlideRelay quits.`
-        : result.state === 'unavailable'
-          ? "This test build doesn't update itself. Download SlideRelay from the project page."
-          : result.message;
+  ($('update-btn') as HTMLButtonElement).disabled =
+    result.state === 'checking' || result.state === 'downloading';
+  switch (result.state) {
+    case 'idle':
+      status.textContent = '';
+      break;
+    case 'checking':
+      status.textContent = 'Checking…';
+      break;
+    case 'downloading':
+      status.textContent =
+        result.percent === null
+          ? `Downloading version ${result.version}…`
+          : `Downloading version ${result.version}… ${result.percent}%`;
+      break;
+    case 'up-to-date':
+      status.textContent = 'You have the newest version.';
+      break;
+    case 'ready':
+      status.textContent = `Version ${result.version} is ready. It also installs by itself when SlideRelay quits.`;
+      break;
+    case 'unavailable':
+      status.textContent =
+        "This test build doesn't update itself. Download SlideRelay from the project page.";
+      break;
+    case 'failed':
+      status.textContent = result.message;
+      break;
+  }
 }
 
-$('update-btn').addEventListener('click', async () => {
-  const btn = $('update-btn') as HTMLButtonElement;
-  btn.disabled = true;
-  $('install-btn').hidden = true;
-  $('update-status').textContent = 'Checking…';
-  try {
-    showUpdate(await invoke<UpdateCheck>('check_for_updates'));
-  } catch (err) {
-    showUpdate({ state: 'failed', message: String(err) });
-  } finally {
-    btn.disabled = false;
+// While a check or download runs, ask for progress every second.
+let polling: number | undefined;
+function follow(result: UpdateCheck): void {
+  showUpdate(result);
+  window.clearTimeout(polling);
+  if (result.state === 'checking' || result.state === 'downloading') {
+    polling = window.setTimeout(
+      () => invoke<UpdateCheck>('update_status').then(follow, () => {}),
+      1000,
+    );
   }
+}
+
+$('update-btn').addEventListener('click', () => {
+  invoke<UpdateCheck>('check_for_updates').then(follow, (err) =>
+    showUpdate({ state: 'failed', message: String(err) }),
+  );
 });
+
+// Show a background check or a ready update when the window opens.
+invoke<UpdateCheck>('update_status').then(
+  (s) => {
+    if (s.state !== 'idle' && s.state !== 'unavailable') follow(s);
+  },
+  () => {},
+);
 
 $('install-btn').addEventListener('click', async () => {
   $('update-status').textContent = 'Installing… SlideRelay reopens in a moment.';

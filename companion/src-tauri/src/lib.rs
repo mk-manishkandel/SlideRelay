@@ -281,8 +281,14 @@ fn app_version() -> &'static str {
 
 /// The "Check for updates" link in the SlideRelay window.
 #[tauri::command]
-async fn check_for_updates(app: AppHandle) -> updates::UpdateCheck {
-    updates::check_now(&app).await
+fn check_for_updates(app: AppHandle) -> updates::UpdateCheck {
+    updates::start_check(&app)
+}
+
+/// Progress of the current update check, for the SlideRelay window.
+#[tauri::command]
+fn update_status(app: AppHandle) -> updates::UpdateCheck {
+    updates::status(&app)
 }
 
 /// The presenter started dragging the toolbar: stop placing it for them.
@@ -625,6 +631,7 @@ pub fn run() {
             answer_pairing,
             app_version,
             check_for_updates,
+            update_status,
             install_update_now,
             connection_setup_needed,
             setup_connection,

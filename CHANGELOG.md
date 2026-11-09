@@ -9,6 +9,14 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Check for updates no longer gets stuck on "Checking…".** It shows each step (Checking,
+  Downloading 1.x.x… 42%, Ready) and gives a clear message if GitHub can't be reached. Update
+  checks now give up after 90 seconds instead of waiting forever, and a failed check is retried
+  after 30 minutes instead of 6 hours. This matters on networks that are slow to reach GitHub's
+  download servers.
+
 ## [1.0.5] - 2026-11-08
 
 ### Changed

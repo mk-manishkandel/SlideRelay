@@ -9,6 +9,8 @@ Write entries for presenters, in plain words. Each release's notes link here.
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-11-09
+
 ### Fixed
 
 - **Check for updates no longer gets stuck on "Checking…".** It shows each step (Checking,
@@ -124,7 +126,8 @@ The first public release.
 - Light and dark themes, WCAG AA contrast, plain words throughout.
 - No accounts, no cloud, no telemetry.
 
-[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.6...HEAD
+[1.0.6]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/mk-manishkandel/SlideRelay/compare/v1.0.2...v1.0.3

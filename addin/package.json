@@ -15,7 +15,7 @@
     "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
-    "@types/office-js": "^1.0.616",
+    "@types/office-js": "^1.0.617",
     "office-addin-dev-certs": "^2.0.0",
     "office-addin-manifest": "^3.0.0"
   }
